@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+
+# Odoo / runtime
+*.log
+.odoo*
+sessions/
+filestore/
+
+# Local config
+odoo.conf
+*.env
+.env
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (if inside repo)
+data/
+pgdata/

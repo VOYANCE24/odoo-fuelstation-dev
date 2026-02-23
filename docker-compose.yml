@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: odoo19-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - odoo19-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo} -d ${POSTGRES_DB:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  odoo:
+    image: odoo:19
+    container_name: odoo19-web
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${ODOO_HTTP_PORT:-8069}:8069"
+      # Optional: keep only if you enable workers + gevent_port in odoo.conf
+      - "${ODOO_GEVENT_PORT:-8072}:8072"
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD}
+    command: >
+      odoo
+      --dev=all
+      -c /etc/odoo/odoo.conf
+    volumes:
+      - odoo19-web-data:/var/lib/odoo
+      - ./custom-addons:/mnt/extra-addons
+      - ./config:/etc/odoo
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8069/web/login >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: odoo19-pgadmin
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-dev@local.test}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - odoo19-pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  odoo19-db-data:
+  odoo19-web-data:
+  odoo19-pgadmin-data:

@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="fuel_station.list">
+      <field name="name">fuel_station list</field>
+      <field name="model">fuel_station.fuel_station</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="fuel_station.action_window">
+      <field name="name">fuel_station window</field>
+      <field name="res_model">fuel_station.fuel_station</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="fuel_station.action_server">
+      <field name="name">fuel_station server</field>
+      <field name="model_id" ref="model_fuel_station_fuel_station"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="fuel_station" id="fuel_station.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="fuel_station.menu_1" parent="fuel_station.menu_root"/>
+    <menuitem name="Menu 2" id="fuel_station.menu_2" parent="fuel_station.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="fuel_station.menu_1_list" parent="fuel_station.menu_1"
+              action="fuel_station.action_window"/>
+    <menuitem name="Server to list" id="fuel_station" parent="fuel_station.menu_2"
+              action="fuel_station.action_server"/>
+-->
+  </data>
+</odoo>

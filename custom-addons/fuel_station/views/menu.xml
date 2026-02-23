@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <menuitem id="menu_fuel_station_root" name="Fuel Station" sequence="60"/>
+
+  <menuitem id="menu_fuel_station_operations" name="Operations" parent="menu_fuel_station_root" sequence="10"/>
+  <menuitem id="menu_fuel_station_config" name="Configuration" parent="menu_fuel_station_root" sequence="20"/>
+
+  <menuitem id="menu_fuel_deliveries" name="Fuel Deliveries"
+            parent="menu_fuel_station_operations"
+            action="action_fuel_delivery"
+            sequence="10"/>
+
+  <menuitem id="menu_fuel_calibration" name="Calibration Profiles"
+            parent="menu_fuel_station_config"
+            action="action_fuel_calibration_profile"
+            sequence="10"/>
+</odoo>

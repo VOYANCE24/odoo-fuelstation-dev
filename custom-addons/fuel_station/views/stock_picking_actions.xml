@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="action_open_fuel_delivery" model="ir.actions.act_window">
+      <field name="name">Fuel Delivery Measurements</field>
+      <field name="res_model">fuel.delivery</field>
+      <field name="view_mode">list,form</field>
+      <field name="domain">[('picking_id', '=', active_id)]</field>
+      <field name="context">{'default_picking_id': active_id}</field>
+    </record>
+
+  </data>
+</odoo>
