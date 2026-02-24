@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_station_shift_close_tree" model="ir.ui.view">
+      <field name="name">fuel.station.shift.close.tree</field>
+      <field name="model">fuel.station.shift.close</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="date"/>
+          <field name="shift_id"/>
+          <field name="state"/>
+          <field name="pump_sales_total"/>
+          <field name="pump_credit_total"/>
+          <field name="cash_expected"/>
+          <field name="cash_deposited_in_safe"/>
+          <field name="safe_difference"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_fuel_station_shift_close_form" model="ir.ui.view">
+      <field name="name">fuel.station.shift.close.form</field>
+      <field name="model">fuel.station.shift.close</field>
+      <field name="arch" type="xml">
+        <form>
+          <header>
+            <button name="action_pull_sessions" type="object" string="Pull Sessions" class="oe_highlight" invisible="state != 'draft'"/>
+            <button name="action_prepare_balancing" type="object" string="Prepare Balancing Lines" invisible="state != 'draft'"/>
+            <button name="action_pull_credit_payments" type="object" string="Pull Credit Payments" invisible="state != 'draft'"/>
+            <button name="action_approve" type="object" string="Approve" class="oe_highlight" invisible="state != 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
+          </header>
+
+          <sheet>
+            <group>
+              <field name="name" readonly="1"/>
+              <field name="date"/>
+              <field name="shift_id"/>
+            </group>
+
+            <notebook>
+
+              <page string="Sessions">
+                <field name="attendant_session_ids" widget="many2many_tags"/>
+              </page>
+
+              <page string="Litre Balancing">
+                <field name="fuel_balance_line_ids">
+                  <tree editable="bottom">
+                    <field name="product_id"/>
+                    <field name="opening_litres"/>
+                    <field name="delivered_litres" readonly="1"/>
+                    <field name="closing_litres"/>
+                    <field name="pump_sold_litres" readonly="1"/>
+                    <field name="expected_outflow" readonly="1"/>
+                    <field name="litre_difference" readonly="1"/>
+                    <field name="price"/>
+                    <field name="loss_value" readonly="1"/>
+                  </tree>
+                </field>
+              </page>
+
+              <page string="Cash Balancing">
+                <group>
+                  <field name="pump_sales_total" readonly="1"/>
+                  <field name="pump_credit_total" readonly="1"/>
+                  <field name="cash_credit_payments" readonly="1"/>
+                  <field name="cheque_credit_payments" readonly="1"/>
+                  <field name="cash_expected" readonly="1"/>
+                </group>
+                <group>
+                  <field name="cash_deposited_in_safe"/>
+                  <field name="safe_difference" readonly="1"/>
+                </group>
+              </page>
+
+              <page string="Credit Payments">
+                <field name="credit_payment_ids">
+                  <tree>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="invoice_ref"/>
+                    <field name="customer_id"/>
+                    <field name="amount_paid"/>
+                    <field name="payment_method"/>
+                  </tree>
+                </field>
+              </page>
+
+            </notebook>
+
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_station_shift_closes" model="ir.actions.act_window">
+      <field name="name">Station Shift Closes</field>
+      <field name="res_model">fuel.station.shift.close</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+  </data>
+</odoo>

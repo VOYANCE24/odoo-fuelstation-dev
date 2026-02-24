@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_pump_tree" model="ir.ui.view">
+      <field name="name">fuel.pump.tree</field>
+      <field name="model">fuel.pump</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="code"/>
+          <field name="product_id"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_fuel_pump_form" model="ir.ui.view">
+      <field name="name">fuel.pump.form</field>
+      <field name="model">fuel.pump</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <group>
+              <field name="name"/>
+              <field name="code"/>
+              <field name="product_id"/>
+              <field name="active"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_pumps" model="ir.actions.act_window">
+      <field name="name">Pumps</field>
+      <field name="res_model">fuel.pump</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+  </data>
+</odoo>

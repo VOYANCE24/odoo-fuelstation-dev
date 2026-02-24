@@ -4,3 +4,19 @@ access_fuel_delivery_compartment_user,fuel.delivery.compartment user,model_fuel_
 access_fuel_delivery_tankdip_user,fuel.delivery.tankdip user,model_fuel_delivery_tankdip,base.group_user,1,1,1,0
 access_fuel_calibration_profile_user,fuel.calibration.profile user,model_fuel_calibration_profile,base.group_user,1,1,1,0
 access_fuel_calibration_line_user,fuel.calibration.line user,model_fuel_calibration_line,base.group_user,1,1,1,0
+
+access_fuel_shift,fuel.shift,model_fuel_shift,base.group_user,1,1,1,0
+access_fuel_pump,fuel.pump,model_fuel_pump,base.group_user,1,1,1,0
+access_fuel_attendant,fuel.attendant,model_fuel_attendant,base.group_user,1,1,1,0
+
+access_fuel_credit_sale,fuel.credit.sale,model_fuel_credit_sale,base.group_user,1,1,1,0
+access_fuel_cash_deposit,fuel.cash.deposit,model_fuel_cash_deposit,base.group_user,1,1,1,0
+access_fuel_credit_payment,fuel.credit.payment,model_fuel_credit_payment,base.group_user,1,1,1,0
+
+access_fuel_attendant_session,fuel.attendant.session,model_fuel_attendant_session,base.group_user,1,1,1,0
+access_fuel_attendant_session_line,fuel.attendant.session.line,model_fuel_attendant_session_line,base.group_user,1,1,1,0
+
+access_fuel_station_shift_close,fuel.station.shift.close,model_fuel_station_shift_close,base.group_user,1,1,1,0
+access_fuel_station_fuel_balance_line,fuel.station.fuel.balance.line,model_fuel_station_fuel_balance_line,base.group_user,1,1,1,0
+
+access_fuel_delivery_line,fuel.delivery.line,model_fuel_delivery_line,base.group_user,1,1,1,0

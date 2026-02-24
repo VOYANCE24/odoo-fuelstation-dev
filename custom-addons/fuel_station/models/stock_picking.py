@@ -1,6 +1,5 @@
 from odoo import fields, models
 
-
 class StockPicking(models.Model):
     _inherit = "stock.picking"
 
@@ -11,12 +10,8 @@ class StockPicking(models.Model):
         for picking in self:
             picking.fuel_delivery_count = FuelDelivery.search_count([("picking_id", "=", picking.id)])
 
-    def action_open_fuel_deliveries(self):
-        """
-        Button entry point (called from stock.picking view):
-        For an incoming picking, open the existing fuel delivery record if present,
-        otherwise create it, then open it in form view.
-        """
+    def action_open_fuel_delivery(self):
+        """Open existing fuel delivery for this picking, otherwise create it."""
         self.ensure_one()
         FuelDelivery = self.env["fuel.delivery"]
 

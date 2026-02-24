@@ -17,7 +17,7 @@ Long description of module's purpose
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base', 'product', 'purchase', 'stock'],
+    'depends': ['base', 'product', 'purchase', 'stock', 'hr'],
 
     # always loaded
     'data': [
@@ -27,15 +27,20 @@ Long description of module's purpose
         'views/calibration_views.xml',
         'views/stock_picking_actions.xml',
         'views/stock_picking_views.xml',
+
+        'views/fuel_shift_views.xml',
+        'views/fuel_pump_views.xml',
+        'views/fuel_attendant_views.xml',
+        'views/fuel_credit_sale_views.xml',
+        'views/fuel_cash_deposit_views.xml',
+        'views/fuel_credit_payment_views.xml',
+        'views/fuel_attendant_session_views.xml',
+        'views/fuel_station_shift_close_views.xml',
+        'views/menu.xml',
     ],
 
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
-
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
-    ],
 }
 

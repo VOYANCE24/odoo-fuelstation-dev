@@ -1,26 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-  <data>
+    <data>
+        <record id="view_stock_picking_form_inherit_fuel_delivery" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit.fuel.delivery</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
 
-    <record id="view_stock_picking_form_inherit_fuel_delivery" model="ir.ui.view">
-      <field name="name">stock.picking.form.inherit.fuel.delivery</field>
-      <field name="model">stock.picking</field>
-      <field name="inherit_id" ref="stock.view_picking_form"/>
-      <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                    <button
+                        name="action_open_fuel_delivery"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-tint"
+                        invisible="picking_type_code != 'incoming'">
+                        <field name="fuel_delivery_count" widget="statinfo" string="Fuel Delivery"/>
+                    </button>
+                </xpath>
 
-<xpath expr="//div[hasclass('oe_button_box')]" position="inside">
-  <button
-      type="action"
-      name="%(fuel_station.action_open_fuel_delivery)d"
-      class="oe_stat_button"
-      icon="fa-tint"
-      invisible="picking_type_code != 'incoming'">
-    <field name="fuel_delivery_count" widget="statinfo" string="Fuel Delivery"/>
-  </button>
-</xpath>
-
-      </field>
-    </record>
-
-  </data>
+            </field>
+        </record>
+    </data>
 </odoo>

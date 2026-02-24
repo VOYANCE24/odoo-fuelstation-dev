@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_credit_sale_tree" model="ir.ui.view">
+      <field name="name">fuel.credit.sale.tree</field>
+      <field name="model">fuel.credit.sale</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="date"/>
+          <field name="shift_id"/>
+          <field name="attendant_id"/>
+          <field name="pump_id"/>
+          <field name="product_id"/>
+          <field name="invoice_ref"/>
+          <field name="customer_id"/>
+          <field name="vehicle_plate"/>
+          <field name="litres"/>
+          <field name="price"/>
+          <field name="amount"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_fuel_credit_sale_form" model="ir.ui.view">
+      <field name="name">fuel.credit.sale.form</field>
+      <field name="model">fuel.credit.sale</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <group>
+              <field name="name" readonly="1"/>
+              <field name="date"/>
+              <field name="shift_id"/>
+              <field name="attendant_id"/>
+              <field name="pump_id"/>
+              <field name="product_id" readonly="1"/>
+            </group>
+            <group string="Customer / Vehicle">
+              <field name="invoice_ref"/>
+              <field name="customer_id"/>
+              <field name="customer_name"/>
+              <field name="vehicle_type"/>
+              <field name="vehicle_plate"/>
+            </group>
+            <group string="Fuel">
+              <field name="litres"/>
+              <field name="price"/>
+              <field name="amount" readonly="1"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_credit_sales" model="ir.actions.act_window">
+      <field name="name">Credit Sales</field>
+      <field name="res_model">fuel.credit.sale</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+  </data>
+</odoo>

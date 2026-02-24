@@ -9,6 +9,11 @@ class FuelDelivery(models.Model):
 
     name = fields.Char(string="Delivery Ref", required=True, default=lambda self: self.env["ir.sequence"].next_by_code("fuel.delivery") or "New")
 
+    delivery_date = fields.Date(default=fields.Date.context_today, required=True)
+    state = fields.Selection([("draft", "Draft"), ("done", "Done")], default="draft", required=True)
+
+    delivery_line_ids = fields.One2many("fuel.delivery.line", "delivery_id", string="Delivered Litres")
+
     picking_id = fields.Many2one(
         "stock.picking",
         string="Receipt (Picking)",

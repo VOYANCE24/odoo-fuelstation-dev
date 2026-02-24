@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_attendant_tree" model="ir.ui.view">
+      <field name="name">fuel.attendant.tree</field>
+      <field name="model">fuel.attendant</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="employee_id"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_fuel_attendant_form" model="ir.ui.view">
+      <field name="name">fuel.attendant.form</field>
+      <field name="model">fuel.attendant</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <group>
+              <field name="name"/>
+              <field name="employee_id"/>
+              <field name="active"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_attendants" model="ir.actions.act_window">
+      <field name="name">Attendants</field>
+      <field name="res_model">fuel.attendant</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+  </data>
+</odoo>

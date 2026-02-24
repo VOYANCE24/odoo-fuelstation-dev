@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_shift_tree" model="ir.ui.view">
+      <field name="name">fuel.shift.tree</field>
+      <field name="model">fuel.shift</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="sequence"/>
+          <field name="name"/>
+          <field name="code"/>
+          <field name="start_time"/>
+          <field name="end_time"/>
+          <field name="active"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_fuel_shift_form" model="ir.ui.view">
+      <field name="name">fuel.shift.form</field>
+      <field name="model">fuel.shift</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <group>
+              <field name="name"/>
+              <field name="code"/>
+              <field name="sequence"/>
+              <field name="active"/>
+            </group>
+            <group string="Shift Window">
+              <field name="start_time"/>
+              <field name="end_time"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_shifts" model="ir.actions.act_window">
+      <field name="name">Shifts</field>
+      <field name="res_model">fuel.shift</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+  </data>
+</odoo>
