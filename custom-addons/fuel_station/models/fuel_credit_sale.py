@@ -1,6 +1,7 @@
 from odoo import fields, models, api
 from odoo.exceptions import ValidationError
 
+
 class FuelCreditSale(models.Model):
     _name = "fuel.credit.sale"
     _description = "Fuel Credit Sale"
@@ -27,23 +28,39 @@ class FuelCreditSale(models.Model):
     session_id = fields.Many2one("fuel.attendant.session", index=True)
     station_close_id = fields.Many2one("fuel.station.shift.close", index=True)
 
+    # ------------------------------------------------------------------
+    # ORM overrides
+    # ------------------------------------------------------------------
+
     @api.model_create_multi
     def create(self, vals_list):
-        seq = self.env["ir.sequence"].next_by_code("fuel.credit.sale") or "CS/"
+        """
+        Fix: sequence called inside loop — each record gets its own unique number.
+        """
         for vals in vals_list:
             if vals.get("name", "New") == "New":
-                vals["name"] = seq
+                vals["name"] = (
+                    self.env["ir.sequence"].next_by_code("fuel.credit.sale") or "CS/"
+                )
         return super().create(vals_list)
+
+    # ------------------------------------------------------------------
+    # Compute
+    # ------------------------------------------------------------------
 
     @api.depends("litres", "price")
     def _compute_amount(self):
-        for r in self:
-            r.amount = (r.litres or 0.0) * (r.price or 0.0)
+        for rec in self:
+            rec.amount = (rec.litres or 0.0) * (rec.price or 0.0)
+
+    # ------------------------------------------------------------------
+    # Constraints
+    # ------------------------------------------------------------------
 
     @api.constrains("litres", "price")
     def _check_positive(self):
-        for r in self:
-            if r.litres <= 0:
+        for rec in self:
+            if rec.litres <= 0:
                 raise ValidationError("Litres must be greater than 0.")
-            if r.price < 0:
+            if rec.price < 0:
                 raise ValidationError("Price must be >= 0.")

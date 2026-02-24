@@ -2,76 +2,118 @@
 <odoo>
   <data>
 
-    <!-- Root -->
+    <!--
+        ROOT MENU
+        Defined here ONLY.  calibration_views.xml and fuel_delivery_views.xml
+        previously re-declared this, causing XML-ID duplicate errors on upgrade.
+    -->
     <menuitem id="fuel_station_root_menu" name="Fuel Station" sequence="10"/>
 
     <!-- Top-level sections -->
-    <menuitem id="fuel_station_ops_menu" name="Operations" parent="fuel_station_root_menu" sequence="10"/>
-    <menuitem id="fuel_station_master_menu" name="Master Data" parent="fuel_station_root_menu" sequence="20"/>
-    <menuitem id="menu_fuel_station_config" name="Configuration" parent="fuel_station_root_menu" sequence="30"/>
+    <menuitem
+        id="fuel_station_ops_menu"
+        name="Operations"
+        parent="fuel_station_root_menu"
+        sequence="10"/>
 
-    <!-- Operations -->
-    <menuitem id="menu_fuel_deliveries"
-              name="Fuel Deliveries"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_delivery"
-              sequence="10"/>
+    <menuitem
+        id="fuel_station_master_menu"
+        name="Master Data"
+        parent="fuel_station_root_menu"
+        sequence="20"/>
 
-    <menuitem id="menu_credit_sales"
-              name="Credit Sales"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_credit_sales"
-              sequence="20"/>
+    <menuitem
+        id="menu_fuel_station_config"
+        name="Configuration"
+        parent="fuel_station_root_menu"
+        sequence="30"/>
 
-    <menuitem id="menu_cash_deposits"
-              name="Cash Deposits"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_cash_deposits"
-              sequence="30"/>
+    <!-- ============================================================
+         Operations
+         ============================================================ -->
 
-    <menuitem id="menu_credit_payments"
-              name="Credit Payments"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_credit_payments"
-              sequence="40"/>
+    <menuitem
+        id="menu_fuel_deliveries"
+        name="Fuel Deliveries"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_delivery"
+        sequence="10"/>
 
-    <menuitem id="menu_attendant_sessions"
-              name="Attendant Sessions"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_attendant_sessions"
-              sequence="50"/>
+    <menuitem
+        id="menu_credit_sales"
+        name="Credit Sales"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_credit_sales"
+        sequence="20"/>
 
-    <menuitem id="menu_station_shift_close"
-              name="Station Shift Close"
-              parent="fuel_station_ops_menu"
-              action="action_fuel_station_shift_closes"
-              sequence="60"/>
+    <menuitem
+        id="menu_cash_deposits"
+        name="Cash Deposits"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_cash_deposits"
+        sequence="30"/>
 
-    <!-- Master Data -->
-    <menuitem id="menu_shifts"
-              name="Shifts"
-              parent="fuel_station_master_menu"
-              action="action_fuel_shifts"
-              sequence="10"/>
+    <menuitem
+        id="menu_credit_payments"
+        name="Credit Payments"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_credit_payments"
+        sequence="40"/>
 
-    <menuitem id="menu_pumps"
-              name="Pumps"
-              parent="fuel_station_master_menu"
-              action="action_fuel_pumps"
-              sequence="20"/>
+    <menuitem
+        id="menu_attendant_sessions"
+        name="Attendant Sessions"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_attendant_sessions"
+        sequence="50"/>
 
-    <menuitem id="menu_attendants"
-              name="Pump Attendants"
-              parent="fuel_station_master_menu"
-              action="action_fuel_attendants"
-              sequence="30"/>
+    <menuitem
+        id="menu_station_shift_close"
+        name="Station Shift Close"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_station_shift_closes"
+        sequence="60"/>
 
-    <!-- Configuration -->
-    <menuitem id="menu_fuel_calibration"
-              name="Calibration Profiles"
-              parent="menu_fuel_station_config"
-              action="action_fuel_calibration_profile"
-              sequence="10"/>
+    <!-- ============================================================
+         Master Data
+         ============================================================ -->
+
+    <menuitem
+        id="menu_shifts"
+        name="Shifts"
+        parent="fuel_station_master_menu"
+        action="action_fuel_shifts"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_pumps"
+        name="Pumps"
+        parent="fuel_station_master_menu"
+        action="action_fuel_pumps"
+        sequence="20"/>
+
+    <menuitem
+        id="menu_attendants"
+        name="Pump Attendants"
+        parent="fuel_station_master_menu"
+        action="action_fuel_attendants"
+        sequence="30"/>
+
+    <!-- ============================================================
+         Configuration
+         ============================================================ -->
+
+    <!--
+        Fix: was "action_fuel_calibration_profile" (singular) — does not exist.
+        The action declared in calibration_views.xml is "action_fuel_calibration_profiles"
+        (plural).  Corrected here.
+    -->
+    <menuitem
+        id="menu_fuel_calibration"
+        name="Calibration Profiles"
+        parent="menu_fuel_station_config"
+        action="action_fuel_calibration_profiles"
+        sequence="10"/>
 
   </data>
 </odoo>

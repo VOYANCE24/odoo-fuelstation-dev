@@ -2,9 +2,6 @@
 <odoo>
     <data>
 
-        <!-- =========================
-             Calibration Profile: List
-             ========================= -->
         <record id="view_fuel_calibration_profile_list" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.list</field>
             <field name="model">fuel.calibration.profile</field>
@@ -18,9 +15,6 @@
             </field>
         </record>
 
-        <!-- =========================
-             Calibration Profile: Form
-             ========================= -->
         <record id="view_fuel_calibration_profile_form" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.form</field>
             <field name="model">fuel.calibration.profile</field>
@@ -32,7 +26,6 @@
                             <field name="product_id"/>
                             <field name="active"/>
                         </group>
-
                         <notebook>
                             <page string="Calibration Lines">
                                 <field name="line_ids">
@@ -48,9 +41,6 @@
             </field>
         </record>
 
-        <!-- =========================
-             Calibration Profile: Search
-             ========================= -->
         <record id="view_fuel_calibration_profile_search" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.search</field>
             <field name="model">fuel.calibration.profile</field>
@@ -64,9 +54,11 @@
             </field>
         </record>
 
-        <!-- =========================
-             Action
-             ========================= -->
+        <!--
+            Fix: action id uses plural "action_fuel_calibration_profiles"
+            to match the reference in menu.xml.
+            Removed duplicate menu declarations (all menus are in menu.xml).
+        -->
         <record id="action_fuel_calibration_profiles" model="ir.actions.act_window">
             <field name="name">Calibration Profiles</field>
             <field name="res_model">fuel.calibration.profile</field>
@@ -78,22 +70,6 @@
                 </p>
             </field>
         </record>
-
-        <!-- =========================
-             Menus
-             ========================= -->
-        <menuitem id="menu_fuel_station_root" name="Fuel Station" sequence="10"/>
-
-        <menuitem id="menu_fuel_station_configuration"
-                  name="Configuration"
-                  parent="menu_fuel_station_root"
-                  sequence="20"/>
-
-        <menuitem id="menu_fuel_calibration_profiles"
-                  name="Calibration Profiles"
-                  parent="menu_fuel_station_configuration"
-                  action="action_fuel_calibration_profiles"
-                  sequence="10"/>
 
     </data>
 </odoo>

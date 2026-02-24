@@ -6,12 +6,12 @@
       <field name="name">fuel.pump.tree</field>
       <field name="model">fuel.pump</field>
       <field name="arch" type="xml">
-        <tree>
+        <list>
           <field name="name"/>
           <field name="code"/>
           <field name="product_id"/>
           <field name="active"/>
-        </tree>
+        </list>
       </field>
     </record>
 
@@ -35,7 +35,7 @@
     <record id="action_fuel_pumps" model="ir.actions.act_window">
       <field name="name">Pumps</field>
       <field name="res_model">fuel.pump</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
     </record>
 
   </data>

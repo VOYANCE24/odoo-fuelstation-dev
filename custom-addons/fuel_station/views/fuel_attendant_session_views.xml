@@ -6,7 +6,7 @@
       <field name="name">fuel.attendant.session.tree</field>
       <field name="model">fuel.attendant.session</field>
       <field name="arch" type="xml">
-        <tree>
+        <list>
           <field name="name"/>
           <field name="date"/>
           <field name="shift_id"/>
@@ -17,7 +17,7 @@
           <field name="expected_cash"/>
           <field name="total_cash_deposited"/>
           <field name="cash_difference"/>
-        </tree>
+        </list>
       </field>
     </record>
 
@@ -27,11 +27,13 @@
       <field name="arch" type="xml">
         <form>
           <header>
-            <button name="action_populate_shift_transactions" type="object" string="Pull Shift Transactions" class="oe_highlight" invisible="state != 'draft'"/>
-            <button name="action_approve" type="object" string="Approve" class="oe_highlight" invisible="state != 'draft'"/>
+            <button name="action_populate_shift_transactions" type="object"
+                    string="Pull Shift Transactions" class="oe_highlight"
+                    invisible="state != 'draft'"/>
+            <button name="action_approve" type="object" string="Approve"
+                    class="oe_highlight" invisible="state != 'draft'"/>
             <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
           </header>
-
           <sheet>
             <group>
               <field name="name" readonly="1"/>
@@ -39,11 +41,10 @@
               <field name="shift_id"/>
               <field name="attendant_id"/>
             </group>
-
             <notebook>
               <page string="Sales">
                 <field name="line_ids">
-                  <tree editable="bottom">
+                  <list editable="bottom">
                     <field name="pump_id"/>
                     <field name="product_id" readonly="1"/>
                     <field name="previous_meter" readonly="1"/>
@@ -51,16 +52,15 @@
                     <field name="litres_sold" readonly="1"/>
                     <field name="price"/>
                     <field name="total" readonly="1"/>
-                  </tree>
+                  </list>
                 </field>
                 <group>
                   <field name="total_sales" readonly="1"/>
                 </group>
               </page>
-
               <page string="Credit Sales">
                 <field name="credit_sale_ids">
-                  <tree>
+                  <list>
                     <field name="name"/>
                     <field name="date"/>
                     <field name="invoice_ref"/>
@@ -70,21 +70,20 @@
                     <field name="litres"/>
                     <field name="price"/>
                     <field name="amount"/>
-                  </tree>
+                  </list>
                 </field>
                 <group>
                   <field name="total_credit_sales" readonly="1"/>
                 </group>
               </page>
-
               <page string="Cash">
                 <field name="cash_deposit_ids">
-                  <tree>
+                  <list>
                     <field name="name"/>
                     <field name="date"/>
                     <field name="amount"/>
                     <field name="received_by_id"/>
-                  </tree>
+                  </list>
                 </field>
                 <group>
                   <field name="expected_cash" readonly="1"/>
@@ -93,7 +92,6 @@
                 </group>
               </page>
             </notebook>
-
           </sheet>
         </form>
       </field>
@@ -102,7 +100,7 @@
     <record id="action_fuel_attendant_sessions" model="ir.actions.act_window">
       <field name="name">Attendant Sessions</field>
       <field name="res_model">fuel.attendant.session</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
     </record>
 
   </data>

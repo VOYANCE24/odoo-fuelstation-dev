@@ -6,14 +6,14 @@
       <field name="name">fuel.shift.tree</field>
       <field name="model">fuel.shift</field>
       <field name="arch" type="xml">
-        <tree>
-          <field name="sequence"/>
+        <list>
+          <field name="sequence" widget="handle"/>
           <field name="name"/>
           <field name="code"/>
           <field name="start_time"/>
           <field name="end_time"/>
           <field name="active"/>
-        </tree>
+        </list>
       </field>
     </record>
 
@@ -30,8 +30,8 @@
               <field name="active"/>
             </group>
             <group string="Shift Window">
-              <field name="start_time"/>
-              <field name="end_time"/>
+              <field name="start_time" widget="float_time"/>
+              <field name="end_time" widget="float_time"/>
             </group>
           </sheet>
         </form>
@@ -41,7 +41,7 @@
     <record id="action_fuel_shifts" model="ir.actions.act_window">
       <field name="name">Shifts</field>
       <field name="res_model">fuel.shift</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
     </record>
 
   </data>

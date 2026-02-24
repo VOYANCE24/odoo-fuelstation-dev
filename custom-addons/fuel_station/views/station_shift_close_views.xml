@@ -6,7 +6,7 @@
       <field name="name">fuel.station.shift.close.tree</field>
       <field name="model">fuel.station.shift.close</field>
       <field name="arch" type="xml">
-        <list>
+        <tree>
           <field name="name"/>
           <field name="date"/>
           <field name="shift_id"/>
@@ -16,7 +16,7 @@
           <field name="cash_expected"/>
           <field name="cash_deposited_in_safe"/>
           <field name="safe_difference"/>
-        </list>
+        </tree>
       </field>
     </record>
 
@@ -26,29 +26,47 @@
       <field name="arch" type="xml">
         <form>
           <header>
-            <button name="action_pull_sessions" type="object" string="Pull Sessions"
-                    class="oe_highlight" invisible="state != 'draft'"/>
-            <button name="action_prepare_balancing" type="object" string="Prepare Balancing Lines"
-                    invisible="state != 'draft'"/>
-            <button name="action_pull_credit_payments" type="object" string="Pull Credit Payments"
-                    invisible="state != 'draft'"/>
-            <button name="action_approve" type="object" string="Approve"
-                    class="oe_highlight" invisible="state != 'draft'"/>
+            <button
+                name="action_pull_sessions"
+                type="object"
+                string="Pull Sessions"
+                class="oe_highlight"
+                invisible="state != 'draft'"/>
+            <button
+                name="action_prepare_balancing"
+                type="object"
+                string="Prepare Balancing Lines"
+                invisible="state != 'draft'"/>
+            <button
+                name="action_pull_credit_payments"
+                type="object"
+                string="Pull Credit Payments"
+                invisible="state != 'draft'"/>
+            <button
+                name="action_approve"
+                type="object"
+                string="Approve"
+                class="oe_highlight"
+                invisible="state != 'draft'"/>
             <field name="state" widget="statusbar" statusbar_visible="draft,approved"/>
           </header>
+
           <sheet>
             <group>
               <field name="name" readonly="1"/>
               <field name="date"/>
               <field name="shift_id"/>
             </group>
+
             <notebook>
+
               <page string="Sessions">
                 <field name="attendant_session_ids" widget="many2many_tags"/>
               </page>
+
               <page string="Litre Balancing">
                 <field name="fuel_balance_line_ids">
-                  <list editable="bottom">
+                  <tree editable="bottom">
                     <field name="product_id"/>
                     <field name="opening_litres"/>
                     <field name="delivered_litres" readonly="1"/>
@@ -58,10 +76,18 @@
                     <field name="litre_difference" readonly="1"/>
                     <field name="price"/>
                     <field name="loss_value" readonly="1"/>
-                  </list>
+                  </tree>
                 </field>
               </page>
+
               <page string="Cash Balancing">
+                <!--
+                    Removed: cash_deposited_by_attendants
+                    This field was computed but never used in any business formula,
+                    creating confusion about what it represented vs. cash_expected.
+                    Per-session cash deposit totals are visible in the Sessions tab
+                    and on each attendant session record.
+                -->
                 <group string="Sales Summary">
                   <field name="pump_sales_total" readonly="1"/>
                   <field name="pump_credit_total" readonly="1"/>
@@ -76,18 +102,20 @@
                   <field name="safe_difference" readonly="1"/>
                 </group>
               </page>
+
               <page string="Credit Payments">
                 <field name="credit_payment_ids">
-                  <list>
+                  <tree>
                     <field name="name"/>
                     <field name="date"/>
                     <field name="invoice_ref"/>
                     <field name="customer_id"/>
                     <field name="amount_paid"/>
                     <field name="payment_method"/>
-                  </list>
+                  </tree>
                 </field>
               </page>
+
             </notebook>
           </sheet>
         </form>
@@ -97,7 +125,7 @@
     <record id="action_fuel_station_shift_closes" model="ir.actions.act_window">
       <field name="name">Station Shift Closes</field>
       <field name="res_model">fuel.station.shift.close</field>
-      <field name="view_mode">list,form</field>
+      <field name="view_mode">tree,form</field>
     </record>
 
   </data>
