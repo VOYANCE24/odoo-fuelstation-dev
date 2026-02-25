@@ -15,3 +15,6 @@ access_fuel_attendant_session_line,fuel.attendant.session.line,model_fuel_attend
 access_fuel_station_shift_close,fuel.station.shift.close,model_fuel_station_shift_close,base.group_user,1,1,1,1
 access_fuel_station_fuel_balance_line,fuel.station.fuel.balance.line,model_fuel_station_fuel_balance_line,base.group_user,1,1,1,1
 access_fuel_delivery_line,fuel.delivery.line,model_fuel_delivery_line,base.group_user,1,1,1,1
+access_fuel_dashboard,fuel.dashboard,model_fuel_dashboard,base.group_user,1,1,1,1
+access_fuel_dashboard_tank_level,fuel.dashboard.tank.level,model_fuel_dashboard_tank_level,base.group_user,1,1,1,1
+access_fuel_dashboard_attendant_rank,fuel.dashboard.attendant.rank,model_fuel_dashboard_attendant_rank,base.group_user,1,1,1,1

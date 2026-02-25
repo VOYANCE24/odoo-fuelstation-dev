@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- ================================================================
+         Product Template — fuel product fields
+         ================================================================ -->
+    <record id="view_product_template_form_fuel_inherit" model="ir.ui.view">
+      <field name="name">product.template.form.fuel.inherit</field>
+      <field name="model">product.template</field>
+      <field name="inherit_id" ref="product.product_template_only_form_view"/>
+      <field name="arch" type="xml">
+        <xpath expr="//notebook" position="inside">
+          <page string="Fuel Station" name="fuel_station">
+            <group>
+              <field name="is_fuel_product"/>
+              <field name="fuel_tank_capacity_liters"
+                     invisible="not is_fuel_product"/>
+            </group>
+          </page>
+        </xpath>
+      </field>
+    </record>
+
+    <!-- ================================================================
+         Dashboard form view
+         ================================================================ -->
+    <record id="view_fuel_dashboard_form" model="ir.ui.view">
+      <field name="name">fuel.dashboard.form</field>
+      <field name="model">fuel.dashboard</field>
+      <field name="arch" type="xml">
+        <form string="Fuel Station Dashboard" create="false" delete="false">
+
+          <sheet>
+
+            <!-- ── Header: period selector + refresh ── -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <h2 class="mb-0">
+                <i class="fa fa-tachometer me-2"/>
+                Fuel Station Dashboard
+              </h2>
+              <div class="d-flex align-items-center gap-2">
+                <label for="date_from" string="From" class="o_form_label me-1"/>
+                <field name="date_from" nolabel="1"/>
+                <label for="date_to" string="To" class="o_form_label ms-2 me-1"/>
+                <field name="date_to" nolabel="1"/>
+                <button name="action_refresh" type="object"
+                        string="&#x21bb; Refresh" class="btn btn-primary ms-2"/>
+              </div>
+            </div>
+
+            <!-- ════════════════════════════════════════════════
+                 SECTION 1 — Tank Levels
+                 ════════════════════════════════════════════════ -->
+            <separator string="Tank Levels"/>
+
+            <!-- In Odoo 19, read-only embedded lists must NOT have
+                 editable="false". Omitting editable makes the list
+                 non-editable by default. create/delete go on the field. -->
+            <field name="tank_level_ids"
+                   nolabel="1"
+                   readonly="1"
+                   options="{'no_create': true, 'no_delete': true}">
+              <list>
+                <field name="product_id" string="Fuel Type"/>
+                <field name="current_level" string="Current Level (L)"/>
+                <field name="tank_capacity" string="Capacity (L)"/>
+                <field name="fill_percent" string="Fill %"
+                       widget="progressbar"
+                       options="{'editable': false, 'max_value': 100}"/>
+                <field name="last_close_date" string="As of"/>
+              </list>
+            </field>
+
+            <!-- ════════════════════════════════════════════════
+                 SECTION 2 — KPI Cards
+                 ════════════════════════════════════════════════ -->
+            <separator string="Period Performance" colspan="2"/>
+
+            <div class="row g-3 mt-1 mb-3">
+
+              <!-- Litres Sold -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Litres Sold
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#1f6fad;">
+                    <field name="total_litres_sold" nolabel="1"
+                           widget="float" options="{'digits': [16,0]}"/>
+                    <small class="text-muted"> L</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sales Revenue -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Sales Revenue
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#2d8a4e;">
+                    <field name="total_revenue" nolabel="1"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Credit Sales -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Credit Sales
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#e07b00;">
+                    <field name="total_credit_sales" nolabel="1"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Receivables -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Receivables
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#c0392b;">
+                    <field name="total_receivables" nolabel="1"/>
+                  </div>
+                  <div class="text-muted mt-1" style="font-size:11px;">
+                    Collected: <field name="total_cash_collected" nolabel="1"/>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Variance Loss Litres -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Variance Loss
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#7d3c98;">
+                    <field name="total_loss_litres" nolabel="1"
+                           widget="float" options="{'digits': [16,2]}"/>
+                    <small class="text-muted"> L</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Variance Loss Value -->
+              <div class="col-lg-2 col-md-4 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm text-center p-3">
+                  <div class="text-muted mb-1"
+                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
+                    Loss Value
+                  </div>
+                  <div class="fw-bold" style="font-size:1.7rem;color:#7d3c98;">
+                    <field name="total_loss_value" nolabel="1"/>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /row -->
+
+            <!-- ════════════════════════════════════════════════
+                 SECTION 3 — Top Attendants
+                 ════════════════════════════════════════════════ -->
+            <separator string="Top Attendants — Period"/>
+
+            <field name="attendant_rank_ids"
+                   nolabel="1"
+                   readonly="1"
+                   options="{'no_create': true, 'no_delete': true}">
+              <list>
+                <field name="rank"          string="#"/>
+                <field name="attendant_id"  string="Attendant"/>
+                <field name="litres_sold"   string="Litres Sold"/>
+                <field name="total_sales"   string="Sales Amount"/>
+                <field name="session_count" string="Sessions"/>
+              </list>
+            </field>
+
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- ================================================================
+         Server action — entry point called by the Dashboard menu item
+         ================================================================ -->
+    <record id="action_fuel_dashboard_server" model="ir.actions.server">
+      <field name="name">Open Fuel Station Dashboard</field>
+      <field name="model_id" ref="model_fuel_dashboard"/>
+      <field name="state">code</field>
+      <field name="code">action = model.action_open()</field>
+    </record>
+
+  </data>
+</odoo>
