@@ -13,6 +13,5 @@ access_fuel_credit_payment,fuel.credit.payment,model_fuel_credit_payment,base.gr
 access_fuel_attendant_session,fuel.attendant.session,model_fuel_attendant_session,base.group_user,1,1,1,1
 access_fuel_attendant_session_line,fuel.attendant.session.line,model_fuel_attendant_session_line,base.group_user,1,1,1,1
 access_fuel_station_shift_close,fuel.station.shift.close,model_fuel_station_shift_close,base.group_user,1,1,1,1
-access_fuel_station_shift_close_tankcheck,fuel.station.shift.close.tankcheck,model_fuel_station_shift_close_tankcheck,base.group_user,1,1,1,1
 access_fuel_station_fuel_balance_line,fuel.station.fuel.balance.line,model_fuel_station_fuel_balance_line,base.group_user,1,1,1,1
 access_fuel_delivery_line,fuel.delivery.line,model_fuel_delivery_line,base.group_user,1,1,1,1
