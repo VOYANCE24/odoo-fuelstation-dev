@@ -229,8 +229,8 @@ class FuelStationShiftClose(models.Model):
         Existing lines are not duplicated.
         """
         for close in self:
-            # Collect products from pumps and session sales lines.
-            products = self.env["fuel.pump"].search([]).mapped("product_id")
+            # Collect products from active nozzles and session sales lines.
+            products = self.env["fuel.nozzle"].search([("active", "=", True)]).mapped("product_id")
             products |= close.attendant_session_ids.mapped("line_ids.product_id")
             products = products.filtered(lambda p: p.id)
 

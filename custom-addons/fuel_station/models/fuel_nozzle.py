@@ -27,10 +27,10 @@ class FuelNozzle(models.Model):
         required=True,
     )
     product_id = fields.Many2one(
-        related="pump_id.product_id",
-        store=True,
-        readonly=True,
+        "product.product",
         string="Fuel Product",
+        required=True,
+        domain=[("type", "in", ["consu", "product"])],
     )
     active = fields.Boolean(default=True)
 

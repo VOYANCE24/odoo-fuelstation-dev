@@ -13,8 +13,19 @@ class FuelCreditSale(models.Model):
 
     shift_id = fields.Many2one("fuel.shift", required=True)
     attendant_id = fields.Many2one("fuel.attendant", required=True)
-    pump_id = fields.Many2one("fuel.pump", required=True)
-    product_id = fields.Many2one(related="pump_id.product_id", store=True, readonly=True)
+    nozzle_id = fields.Many2one("fuel.nozzle", string="Nozzle", required=True)
+    pump_id = fields.Many2one(
+        "fuel.pump",
+        related="nozzle_id.pump_id",
+        store=True,
+        readonly=True,
+        string="Pump",
+    )
+    product_id = fields.Many2one(
+        related="nozzle_id.product_id",
+        store=True,
+        readonly=True,
+    )
 
     invoice_ref = fields.Char(required=True)
     customer_id = fields.Many2one("res.partner", domain=[("customer_rank", ">", 0)])

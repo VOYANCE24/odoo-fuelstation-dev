@@ -152,7 +152,8 @@
                     <field name="name"/>
                     <field name="date"/>
                     <field name="invoice_ref"/>
-                    <field name="pump_id"/>
+                    <field name="nozzle_id"/>
+                    <field name="pump_id" optional="show"/>
                     <field name="customer_id"/>
                     <field name="vehicle_plate"/>
                     <field name="litres"/>
