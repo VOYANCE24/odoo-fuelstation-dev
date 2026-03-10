@@ -11,8 +11,10 @@
           <field name="date"/>
           <field name="shift_id"/>
           <field name="attendant_id"/>
-          <field name="amount"/>
-          <field name="received_by_id"/>
+          <field name="currency_id" column_invisible="1"/>
+          <field name="amount" widget="monetary"/>
+          <field name="received_by_id" optional="show"/>
+          <field name="note" optional="hide"/>
         </list>
       </field>
     </record>
@@ -23,19 +25,49 @@
       <field name="arch" type="xml">
         <form>
           <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
             <group>
-              <field name="name" readonly="1"/>
-              <field name="date"/>
-              <field name="shift_id"/>
-              <field name="attendant_id"/>
-            </group>
-            <group>
-              <field name="amount"/>
-              <field name="received_by_id"/>
-              <field name="note"/>
+              <group string="Details">
+                <field name="date"/>
+                <field name="shift_id"/>
+                <field name="attendant_id"/>
+              </group>
+              <group string="Cash">
+                <field name="currency_id" invisible="1"/>
+                <field name="amount" widget="monetary"/>
+                <field name="received_by_id"/>
+                <field name="note" placeholder="Optional note…"/>
+              </group>
             </group>
           </sheet>
         </form>
+      </field>
+    </record>
+
+    <record id="view_fuel_cash_deposit_search" model="ir.ui.view">
+      <field name="name">fuel.cash.deposit.search</field>
+      <field name="model">fuel.cash.deposit</field>
+      <field name="arch" type="xml">
+        <search string="Search Cash Deposits">
+          <field name="name"/>
+          <field name="attendant_id"/>
+          <field name="shift_id"/>
+          <filter string="Today" name="today"
+                  domain="[('date','&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),('date','&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]"/>
+          <filter string="This Month" name="this_month"
+                  domain="[('date','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+          <separator/>
+          <filter string="Not Linked to Session" name="unlinked"
+                  domain="[('session_id','=',False)]"/>
+          <group>
+            <filter string="Attendant" name="group_attendant" context="{'group_by': 'attendant_id'}"/>
+            <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
+            <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
+          </group>
+        </search>
       </field>
     </record>
 
@@ -43,6 +75,14 @@
       <field name="name">Cash Deposits</field>
       <field name="res_model">fuel.cash.deposit</field>
       <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_cash_deposit_search"/>
+      <field name="context">{"search_default_today": 1}</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          No cash deposits recorded yet.
+        </p>
+        <p>Record cash handovers from attendants to the cashier during a shift.</p>
+      </field>
     </record>
 
   </data>

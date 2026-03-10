@@ -32,11 +32,17 @@ class FuelStationFuelBalanceLine(models.Model):
     #     - No cross-model Many2many path traversal is needed at startup.
     # ------------------------------------------------------------------
 
+    _unique_close_product = models.Constraint(
+        "UNIQUE(close_id, product_id)",
+        "Only one balance line per fuel product per shift close.",
+    )
+
     date = fields.Date(
         compute="_compute_close_fields",
         store=True,
         readonly=True,
         string="Date",
+        index=True,
     )
     shift_id = fields.Many2one(
         "fuel.shift",
@@ -58,6 +64,11 @@ class FuelStationFuelBalanceLine(models.Model):
     litre_difference = fields.Float(compute="_compute_variance", store=True)
 
     price = fields.Float(string="Price per Litre")
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
     loss_value = fields.Float(compute="_compute_variance", store=True)
 
     # ------------------------------------------------------------------
@@ -137,3 +148,8 @@ class FuelStationFuelBalanceLine(models.Model):
             line.expected_outflow = opening + delivered - closing
             line.litre_difference = line.expected_outflow - sold
             line.loss_value = line.litre_difference * (line.price or 0.0)
+
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id

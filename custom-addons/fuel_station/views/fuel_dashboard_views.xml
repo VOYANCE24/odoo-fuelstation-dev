@@ -30,157 +30,269 @@
       <field name="model">fuel.dashboard</field>
       <field name="arch" type="xml">
         <form string="Fuel Station Dashboard" create="false" delete="false">
-
           <sheet>
 
-            <!-- ── Header: period selector + refresh ── -->
-            <div class="d-flex align-items-center justify-content-between mb-4">
-              <h2 class="mb-0">
-                <i class="fa fa-tachometer me-2"/>
-                Fuel Station Dashboard
-              </h2>
-              <div class="d-flex align-items-center gap-2">
-                <label for="date_from" string="From" class="o_form_label me-1"/>
-                <field name="date_from" nolabel="1"/>
-                <label for="date_to" string="To" class="o_form_label ms-2 me-1"/>
-                <field name="date_to" nolabel="1"/>
-                <button name="action_refresh" type="object"
-                        string="&#x21bb; Refresh" class="btn btn-primary ms-2"/>
+            <!-- ── Hidden fields used in invisible conditions ── -->
+            <field name="currency_id" invisible="1"/>
+            <field name="pending_session_count" invisible="1"/>
+            <field name="unpaid_credit_count" invisible="1"/>
+            <field name="pending_delivery_count" invisible="1"/>
+            <field name="total_safe_difference" invisible="1"/>
+
+            <!-- ════════════════════════════════════════════════
+                 ALERT BAR — shown when any pending items exist
+                 ════════════════════════════════════════════════ -->
+            <div class="alert alert-warning d-flex align-items-center flex-wrap gap-2 mb-3 py-2"
+                 role="status"
+                 invisible="pending_session_count == 0 and unpaid_credit_count == 0 and pending_delivery_count == 0">
+              <i class="fa fa-exclamation-triangle fa-lg me-1" title="Action Required"/>
+              <strong>Action Required:</strong>
+              <button name="action_open_pending_sessions" type="object"
+                      class="btn btn-sm btn-warning"
+                      invisible="pending_session_count == 0">
+                <i class="fa fa-users me-1" title="Sessions"/>
+                <field name="pending_session_count" nolabel="1"/> Draft Sessions
+              </button>
+              <button name="action_open_unpaid_credits" type="object"
+                      class="btn btn-sm btn-warning"
+                      invisible="unpaid_credit_count == 0">
+                <i class="fa fa-credit-card me-1" title="Credit Sales"/>
+                <field name="unpaid_credit_count" nolabel="1"/> Unpaid Credits
+              </button>
+              <button name="action_open_pending_deliveries" type="object"
+                      class="btn btn-sm btn-warning"
+                      invisible="pending_delivery_count == 0">
+                <i class="fa fa-truck me-1" title="Deliveries"/>
+                <field name="pending_delivery_count" nolabel="1"/> Pending Deliveries
+              </button>
+            </div>
+
+            <!-- ════════════════════════════════════════════════
+                 HEADER — Title + timestamp + presets + date range
+                 ════════════════════════════════════════════════ -->
+            <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
+              <div>
+                <h2 class="mb-1">
+                  <i class="fa fa-tachometer me-2 text-primary" title="Dashboard"/>
+                  Fuel Station Dashboard
+                </h2>
+                <div class="text-muted small" invisible="not last_refreshed">
+                  Last refreshed: <field name="last_refreshed" nolabel="1" readonly="1"/>
+                </div>
+              </div>
+              <div class="d-flex flex-column align-items-end gap-2">
+                <!-- Quick period presets -->
+                <div class="btn-group" role="group">
+                  <button name="action_set_today" type="object" string="Today"
+                          class="btn btn-sm btn-outline-secondary"/>
+                  <button name="action_set_this_week" type="object" string="This Week"
+                          class="btn btn-sm btn-outline-secondary"/>
+                  <button name="action_set_this_month" type="object" string="This Month"
+                          class="btn btn-sm btn-outline-secondary"/>
+                  <button name="action_set_last_month" type="object" string="Last Month"
+                          class="btn btn-sm btn-outline-secondary"/>
+                </div>
+                <!-- Custom date range + refresh -->
+                <div class="d-flex align-items-center gap-2">
+                  <label for="date_from" string="From" class="o_form_label me-1"/>
+                  <field name="date_from" nolabel="1"/>
+                  <label for="date_to" string="To" class="o_form_label ms-2 me-1"/>
+                  <field name="date_to" nolabel="1"/>
+                  <button name="action_refresh" type="object"
+                          string="↻ Refresh" class="btn btn-primary ms-2"/>
+                </div>
               </div>
             </div>
 
             <!-- ════════════════════════════════════════════════
-                 SECTION 1 — Tank Levels
+                 SECTION 1 — Tank Levels (colour-coded kanban)
                  ════════════════════════════════════════════════ -->
             <separator string="Tank Levels"/>
 
-            <!-- In Odoo 19, read-only embedded lists must NOT have
-                 editable="false". Omitting editable makes the list
-                 non-editable by default. create/delete go on the field. -->
-            <field name="tank_level_ids"
-                   nolabel="1"
-                   readonly="1"
+            <field name="tank_level_ids" nolabel="1" readonly="1"
                    options="{'no_create': true, 'no_delete': true}">
-              <list>
-                <field name="product_id" string="Fuel Type"/>
-                <field name="current_level" string="Current Level (L)"/>
-                <field name="tank_capacity" string="Capacity (L)"/>
-                <field name="fill_percent" string="Fill %"
-                       widget="progressbar"
-                       options="{'editable': false, 'max_value': 100}"/>
-                <field name="last_close_date" string="As of"/>
-              </list>
+              <kanban>
+                <field name="product_id"/>
+                <field name="current_level"/>
+                <field name="tank_capacity"/>
+                <field name="fill_percent"/>
+                <field name="fill_status"/>
+                <field name="last_close_date"/>
+                <templates>
+                  <t t-name="card">
+                    <div t-attf-class="card border-0 shadow-sm border-start border-5 border-#{record.fill_status.raw_value} p-3 mb-2">
+                      <div class="fw-semibold fs-6 mb-2 text-truncate">
+                        <t t-esc="record.product_id.value"/>
+                      </div>
+                      <span t-attf-class="badge text-bg-#{record.fill_status.raw_value} mb-2">
+                        <t t-esc="record.fill_percent.raw_value"/>%
+                      </span>
+                      <div class="progress mb-2" style="height:8px;">
+                        <div t-attf-class="progress-bar bg-#{record.fill_status.raw_value}"
+                             t-attf-style="width:#{record.fill_percent.raw_value}%"/>
+                      </div>
+                      <div class="text-muted small">
+                        <field name="current_level"/> / <field name="tank_capacity"/> L
+                      </div>
+                      <div class="text-muted small mt-1">
+                        As of <field name="last_close_date"/>
+                      </div>
+                    </div>
+                  </t>
+                </templates>
+              </kanban>
             </field>
 
             <!-- ════════════════════════════════════════════════
                  SECTION 2 — KPI Cards
                  ════════════════════════════════════════════════ -->
-            <separator string="Period Performance" colspan="2"/>
+            <separator string="Period Performance"/>
 
-            <div class="row g-3 mt-1 mb-3">
+            <!-- Row 1: Primary KPIs — 3 wide cards -->
+            <div class="row g-3 mt-1 mb-2">
 
               <!-- Litres Sold -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Litres Sold
+              <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-tint fa-2x text-primary me-3" title="Litres Sold"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Litres Sold</div>
                   </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#1f6fad;">
+                  <div class="fw-bold fs-2 text-primary">
                     <field name="total_litres_sold" nolabel="1"
                            widget="float" options="{'digits': [16,0]}"/>
-                    <small class="text-muted"> L</small>
+                    <small class="text-muted fs-6"> L</small>
                   </div>
                 </div>
               </div>
 
               <!-- Sales Revenue -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Sales Revenue
+              <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-money fa-2x text-success me-3" title="Sales Revenue"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Sales Revenue</div>
                   </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#2d8a4e;">
-                    <field name="total_revenue" nolabel="1"/>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Credit Sales -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Credit Sales
-                  </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#e07b00;">
-                    <field name="total_credit_sales" nolabel="1"/>
+                  <div class="fw-bold fs-2 text-success">
+                    <field name="total_revenue" nolabel="1" widget="monetary"/>
                   </div>
                 </div>
               </div>
 
-              <!-- Receivables -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Receivables
+              <!-- Cash Collected -->
+              <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-check-circle fa-2x text-success me-3" title="Cash Collected"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Cash Collected</div>
                   </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#c0392b;">
-                    <field name="total_receivables" nolabel="1"/>
-                  </div>
-                  <div class="text-muted mt-1" style="font-size:11px;">
-                    Collected: <field name="total_cash_collected" nolabel="1"/>
+                  <div class="fw-bold fs-2 text-success">
+                    <field name="total_cash_collected" nolabel="1" widget="monetary"/>
                   </div>
                 </div>
               </div>
 
-              <!-- Variance Loss Litres -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Variance Loss
+            </div><!-- /row 1 -->
+
+            <!-- Row 2: Secondary KPIs — 4 narrower cards -->
+            <div class="row g-3 mb-3">
+
+              <!-- Credit Sales (drill-through) -->
+              <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-credit-card fa-lg text-warning me-2" title="Credit Sales"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Credit Sales</div>
                   </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#7d3c98;">
+                  <div class="fw-bold fs-4 text-warning">
+                    <field name="total_credit_sales" nolabel="1" widget="monetary"/>
+                  </div>
+                  <button name="action_open_credit_sales_period" type="object"
+                          string="View details →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start"/>
+                </div>
+              </div>
+
+              <!-- Outstanding Receivables (drill-through) -->
+              <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-exclamation-circle fa-lg text-danger me-2" title="Receivables"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Receivables</div>
+                  </div>
+                  <div class="fw-bold fs-4 text-danger">
+                    <field name="total_receivables" nolabel="1" widget="monetary"/>
+                  </div>
+                  <button name="action_open_unpaid_credits" type="object"
+                          string="View unpaid →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start text-danger"/>
+                </div>
+              </div>
+
+              <!-- Variance Loss -->
+              <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-flask fa-lg me-2" style="color:#7d3c98;" title="Variance Loss"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Variance Loss</div>
+                  </div>
+                  <div class="fw-bold fs-4" style="color:#7d3c98;">
                     <field name="total_loss_litres" nolabel="1"
                            widget="float" options="{'digits': [16,2]}"/>
-                    <small class="text-muted"> L</small>
+                    <small class="text-muted fs-6"> L</small>
+                  </div>
+                  <div class="text-muted small mt-1">
+                    Value: <field name="total_loss_value" nolabel="1" widget="monetary"/>
                   </div>
                 </div>
               </div>
 
-              <!-- Variance Loss Value -->
-              <div class="col-lg-2 col-md-4 col-sm-6">
-                <div class="card h-100 border-0 shadow-sm text-center p-3">
-                  <div class="text-muted mb-1"
-                       style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">
-                    Loss Value
+              <!-- Cash Variance (green surplus / red shortage) -->
+              <div class="col-lg-3 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-balance-scale fa-lg text-info me-2" title="Cash Variance"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Cash Variance</div>
                   </div>
-                  <div class="fw-bold" style="font-size:1.7rem;color:#7d3c98;">
-                    <field name="total_loss_value" nolabel="1"/>
+                  <div class="fw-bold fs-4 text-success"
+                       invisible="total_safe_difference &lt; 0">
+                    <field name="total_safe_difference" nolabel="1" widget="monetary"/>
                   </div>
+                  <div class="fw-bold fs-4 text-danger"
+                       invisible="total_safe_difference &gt;= 0">
+                    <field name="total_safe_difference" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="text-muted small mt-1">vs expected cash</div>
                 </div>
               </div>
 
-            </div><!-- /row -->
+            </div><!-- /row 2 -->
 
             <!-- ════════════════════════════════════════════════
-                 SECTION 3 — Top Attendants
+                 SECTION 3 — Top Attendants leaderboard
                  ════════════════════════════════════════════════ -->
             <separator string="Top Attendants — Period"/>
 
-            <field name="attendant_rank_ids"
-                   nolabel="1"
-                   readonly="1"
+            <field name="attendant_rank_ids" nolabel="1" readonly="1"
                    options="{'no_create': true, 'no_delete': true}">
-              <list>
-                <field name="rank"          string="#"/>
-                <field name="attendant_id"  string="Attendant"/>
-                <field name="litres_sold"   string="Litres Sold"/>
-                <field name="total_sales"   string="Sales Amount"/>
+              <list decoration-warning="rank == 1"
+                    decoration-info="rank == 2">
+                <field name="rank" string="#" optional="hide"/>
+                <field name="rank_label" string="Rank"/>
+                <field name="attendant_id" string="Attendant"/>
+                <field name="litres_sold" string="Litres Sold"/>
+                <field name="total_sales" string="Sales Amount"/>
                 <field name="session_count" string="Sessions"/>
+                <field name="pct_of_total" string="Share %"
+                       widget="progressbar"
+                       options="{'editable': false, 'max_value': 100}"/>
               </list>
             </field>
 

@@ -6,9 +6,15 @@ class FuelAttendantSession(models.Model):
     _name = "fuel.attendant.session"
     _description = "Attendant Shift Session (Closing)"
     _order = "date desc, id desc"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    _unique_attendant_shift_date = models.Constraint(
+        "UNIQUE(attendant_id, shift_id, date)",
+        "An attendant can only have one session per shift per day.",
+    )
 
     name = fields.Char(default="New", readonly=True)
-    date = fields.Date(required=True, default=fields.Date.context_today)
+    date = fields.Date(required=True, default=fields.Date.context_today, index=True)
     shift_id = fields.Many2one("fuel.shift", required=True)
     attendant_id = fields.Many2one("fuel.attendant", required=True)
 
@@ -16,6 +22,7 @@ class FuelAttendantSession(models.Model):
         [("draft", "Draft"), ("approved", "Approved")],
         default="draft",
         required=True,
+        index=True,
     )
 
     line_ids = fields.One2many(
@@ -36,6 +43,14 @@ class FuelAttendantSession(models.Model):
 
     approver_id = fields.Many2one("res.users")
     approved_at = fields.Datetime()
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
+    credit_sale_count = fields.Integer(compute='_compute_counts')
+    cash_deposit_count = fields.Integer(compute='_compute_counts')
 
     # ------------------------------------------------------------------
     # ORM overrides
@@ -72,6 +87,17 @@ class FuelAttendantSession(models.Model):
             session.cash_difference = (
                 session.total_cash_deposited - session.expected_cash
             )
+
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id
+
+    @api.depends('credit_sale_ids', 'cash_deposit_ids')
+    def _compute_counts(self):
+        for rec in self:
+            rec.credit_sale_count = len(rec.credit_sale_ids)
+            rec.cash_deposit_count = len(rec.cash_deposit_ids)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -133,3 +159,25 @@ class FuelAttendantSession(models.Model):
                     "approved_at": fields.Datetime.now(),
                 }
             )
+
+    def action_open_credit_sales(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Credit Sales',
+            'res_model': 'fuel.credit.sale',
+            'view_mode': 'list,form',
+            'domain': [('session_id', '=', self.id)],
+            'context': {'default_session_id': self.id},
+        }
+
+    def action_open_cash_deposits(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Cash Deposits',
+            'res_model': 'fuel.cash.deposit',
+            'view_mode': 'list,form',
+            'domain': [('session_id', '=', self.id)],
+            'context': {'default_session_id': self.id},
+        }

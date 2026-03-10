@@ -2,96 +2,141 @@
 <odoo>
 
     <record id="view_fuel_delivery_list" model="ir.ui.view">
-        <field name="name">fuel.delivery.list</field>
-        <field name="model">fuel.delivery</field>
-        <field name="arch" type="xml">
-            <list string="Fuel Deliveries">
-                <field name="name"/>
-                <field name="delivery_date"/>
-                <field name="picking_id"/>
-                <field name="truck_id"/>
-                <field name="state"/>
-            </list>
-        </field>
+      <field name="name">fuel.delivery.list</field>
+      <field name="model">fuel.delivery</field>
+      <field name="arch" type="xml">
+        <list string="Fuel Deliveries"
+              decoration-muted="state == 'draft'"
+              decoration-info="state == 'measured'"
+              decoration-success="state == 'applied'">
+          <field name="name"/>
+          <field name="delivery_date"/>
+          <field name="picking_id"/>
+          <field name="truck_id" optional="show"/>
+          <field name="state" widget="badge"
+                 decoration-info="state == 'measured'"
+                 decoration-success="state == 'applied'"/>
+        </list>
+      </field>
     </record>
 
     <record id="view_fuel_delivery_form" model="ir.ui.view">
-        <field name="name">fuel.delivery.form</field>
-        <field name="model">fuel.delivery</field>
-        <field name="arch" type="xml">
-            <form string="Fuel Delivery">
-                <header>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,measured,applied"/>
-                    <button name="action_mark_measured" type="object" string="Mark Measured"
-                            class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_apply_measured_quantities" type="object" string="Apply to Stock"
-                            class="btn-primary" invisible="state != 'measured'"/>
-                </header>
-                <sheet>
-                    <group>
-                        <group>
-                            <field name="name" readonly="1"/>
-                            <field name="delivery_date"/>
-                            <field name="picking_id"/>
-                        </group>
-                        <group>
-                            <field name="truck_id"/>
-                            <field name="notes"/>
-                        </group>
-                    </group>
-                    <notebook>
-                        <page string="Compartments">
-                            <field name="compartment_line_ids">
-                                <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="compartment_code"/>
-                                    <field name="product_id"/>
-                                    <field name="expected_depth_mm"/>
-                                    <field name="measured_depth_mm"/>
-                                    <field name="depth_diff_mm" readonly="1"/>
-                                    <field name="expected_density"/>
-                                    <field name="measured_density"/>
-                                    <field name="density_diff" readonly="1"/>
-                                    <field name="calibration_profile_id"/>
-                                    <field name="measured_volume_liters" readonly="1"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Tank Dips">
-                            <field name="tankdip_line_ids">
-                                <list editable="bottom">
-                                    <field name="sequence" widget="handle"/>
-                                    <field name="tank_code"/>
-                                    <field name="product_id"/>
-                                    <field name="calibration_profile_id"/>
-                                    <field name="depth_before_mm"/>
-                                    <field name="depth_after_mm"/>
-                                    <field name="volume_before_liters" readonly="1"/>
-                                    <field name="volume_after_liters" readonly="1"/>
-                                    <field name="delta_volume_liters" readonly="1"/>
-                                </list>
-                            </field>
-                        </page>
-                        <page string="Delivered Litres">
-                            <field name="delivery_line_ids">
-                                <list editable="bottom">
-                                    <field name="product_id"/>
-                                    <field name="received_litres"/>
-                                </list>
-                            </field>
-                        </page>
-                    </notebook>
-                </sheet>
-            </form>
-        </field>
+      <field name="name">fuel.delivery.form</field>
+      <field name="model">fuel.delivery</field>
+      <field name="arch" type="xml">
+        <form string="Fuel Delivery">
+          <header>
+            <button name="action_mark_measured" type="object" string="Mark Measured"
+                    class="btn-primary" invisible="state != 'draft'"
+                    groups="fuel_station.group_fuel_manager"/>
+            <button name="action_apply_measured_quantities" type="object"
+                    string="Apply to Stock" class="btn-primary"
+                    invisible="state != 'measured'"
+                    groups="fuel_station.group_fuel_manager"/>
+            <field name="state" widget="statusbar"
+                   statusbar_visible="draft,measured,applied"/>
+          </header>
+          <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group>
+                <field name="delivery_date"/>
+                <field name="picking_id"/>
+              </group>
+              <group>
+                <field name="truck_id" placeholder="e.g. UAX 123G"/>
+                <field name="notes" placeholder="Optional notes…"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="Compartments" name="compartments">
+                <field name="compartment_line_ids">
+                  <list editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="compartment_code"/>
+                    <field name="product_id"/>
+                    <field name="calibration_profile_id"/>
+                    <field name="expected_depth_mm" optional="show"/>
+                    <field name="measured_depth_mm"/>
+                    <field name="depth_diff_mm" readonly="1" optional="show"/>
+                    <field name="expected_density" optional="hide"/>
+                    <field name="measured_density" optional="hide"/>
+                    <field name="density_diff" readonly="1" optional="hide"/>
+                    <field name="measured_volume_liters" readonly="1"/>
+                  </list>
+                </field>
+              </page>
+              <page string="Tank Dips" name="tank_dips">
+                <field name="tankdip_line_ids">
+                  <list editable="bottom">
+                    <field name="sequence" widget="handle"/>
+                    <field name="tank_code"/>
+                    <field name="product_id"/>
+                    <field name="calibration_profile_id"/>
+                    <field name="depth_before_mm"/>
+                    <field name="depth_after_mm"/>
+                    <field name="volume_before_liters" readonly="1"/>
+                    <field name="volume_after_liters" readonly="1"/>
+                    <field name="delta_volume_liters" readonly="1"/>
+                  </list>
+                </field>
+              </page>
+              <page string="Delivered Litres" name="delivered_litres">
+                <p class="text-muted fst-italic">
+                  Auto-populated from compartment measurements when "Apply to Stock" is clicked.
+                </p>
+                <field name="delivery_line_ids" readonly="1">
+                  <list>
+                    <field name="product_id"/>
+                    <field name="received_litres"/>
+                  </list>
+                </field>
+              </page>
+            </notebook>
+          </sheet>
+          <chatter/>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_fuel_delivery_search" model="ir.ui.view">
+      <field name="name">fuel.delivery.search</field>
+      <field name="model">fuel.delivery</field>
+      <field name="arch" type="xml">
+        <search string="Search Fuel Deliveries">
+          <field name="name"/>
+          <field name="picking_id"/>
+          <field name="truck_id"/>
+          <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+          <filter string="Measured" name="measured" domain="[('state','=','measured')]"/>
+          <filter string="Applied" name="applied" domain="[('state','=','applied')]"/>
+          <separator/>
+          <filter string="Today" name="today"
+                  domain="[('delivery_date','=', context_today().strftime('%Y-%m-%d'))]"/>
+          <filter string="This Week" name="this_week"
+                  domain="[('delivery_date','&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+          <group>
+            <filter string="Date" name="group_date" context="{'group_by': 'delivery_date'}"/>
+            <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+          </group>
+        </search>
+      </field>
     </record>
 
     <record id="action_fuel_delivery" model="ir.actions.act_window">
-        <field name="name">Fuel Deliveries</field>
-        <field name="res_model">fuel.delivery</field>
-        <field name="view_mode">list,form</field>
+      <field name="name">Fuel Deliveries</field>
+      <field name="res_model">fuel.delivery</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_delivery_search"/>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          Record your first fuel delivery.
+        </p>
+        <p>Link a delivery to a stock receipt, enter compartment dip measurements, then apply to stock.</p>
+      </field>
     </record>
-
-    <!-- All menus are defined in menu.xml — no menu declarations here -->
 
 </odoo>

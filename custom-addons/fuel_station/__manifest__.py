@@ -8,11 +8,18 @@
     'author': "Voyance Consulting Co. Limited",
     'website': "https://www.voyanceconsults.com",
     'category': 'Fuel Station',
-    'version': '0.2',
+    'version': '0.5',
 
-    'depends': ['base', 'product', 'purchase', 'stock', 'hr'],
+    'depends': ['base', 'mail', 'product', 'purchase', 'stock', 'hr'],
+
+    'assets': {
+        'web.assets_backend': [
+            'fuel_station/static/src/scss/fuel_station.scss',
+        ],
+    },
 
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
 

@@ -6,15 +6,22 @@ class FuelStationShiftClose(models.Model):
     _name = "fuel.station.shift.close"
     _description = "Station Shift Close"
     _order = "date desc, id desc"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+    _unique_date_shift = models.Constraint(
+        "UNIQUE(date, shift_id)",
+        "A shift can only be closed once per day.",
+    )
 
     name = fields.Char(default="New", readonly=True)
-    date = fields.Date(required=True, default=fields.Date.context_today)
+    date = fields.Date(required=True, default=fields.Date.context_today, index=True)
     shift_id = fields.Many2one("fuel.shift", required=True)
 
     state = fields.Selection(
         [("draft", "Draft"), ("approved", "Approved")],
         default="draft",
         required=True,
+        index=True,
     )
 
     attendant_session_ids = fields.Many2many(
@@ -88,6 +95,14 @@ class FuelStationShiftClose(models.Model):
 
     approver_id = fields.Many2one("res.users", readonly=True)
     approved_at = fields.Datetime(readonly=True)
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
+    session_count = fields.Integer(compute='_compute_counts')
+    credit_payment_count = fields.Integer(compute='_compute_counts')
 
     # ------------------------------------------------------------------
     # ORM overrides
@@ -163,6 +178,17 @@ class FuelStationShiftClose(models.Model):
                 (close.cash_deposited_in_safe or 0.0) - close.cash_expected
             )
 
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id
+
+    @api.depends('attendant_session_ids', 'credit_payment_ids')
+    def _compute_counts(self):
+        for rec in self:
+            rec.session_count = len(rec.attendant_session_ids)
+            rec.credit_payment_count = len(rec.credit_payment_ids)
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
@@ -197,6 +223,9 @@ class FuelStationShiftClose(models.Model):
         """
         Create fuel balance lines for every product that appeared in any
         session pump line or is assigned to any active pump.
+
+        Auto-carries opening_litres from the most recent approved balance line
+        for the same product so operators do not have to enter it manually.
         Existing lines are not duplicated.
         """
         for close in self:
@@ -208,9 +237,20 @@ class FuelStationShiftClose(models.Model):
             existing_product_ids = close.fuel_balance_line_ids.mapped("product_id").ids
             for product in products:
                 if product.id not in existing_product_ids:
+                    # Carry forward closing litres from the previous approved close.
+                    prev = self.env["fuel.station.fuel.balance.line"].search(
+                        [
+                            ("product_id", "=", product.id),
+                            ("close_id.state", "=", "approved"),
+                            ("close_id", "!=", close.id),
+                        ],
+                        order="date desc, id desc",
+                        limit=1,
+                    )
                     self.env["fuel.station.fuel.balance.line"].create({
                         "close_id": close.id,
                         "product_id": product.id,
+                        "opening_litres": prev.closing_litres if prev else 0.0,
                     })
 
     def action_pull_credit_payments(self):
@@ -228,17 +268,31 @@ class FuelStationShiftClose(models.Model):
             )
             payments.write({"station_close_id": close.id})
 
+    def action_prepare_shift_close(self):
+        """
+        Single-button convenience action: runs Pull Sessions → Prepare Balancing
+        Lines → Pull Credit Payments in one transaction.
+
+        Replaces the three separate manual buttons so operators cannot accidentally
+        skip a step or run them out of order.
+        """
+        self.action_pull_sessions()
+        self.action_prepare_balancing()
+        self.action_pull_credit_payments()
+
     def action_approve(self):
         for close in self:
             if close.state != "draft":
                 continue
             if not close.attendant_session_ids:
                 raise ValidationError(
-                    "Pull or select approved attendant sessions before approval."
+                    "No approved attendant sessions found. "
+                    "Use 'Prepare Shift Close' to pull sessions before approving."
                 )
             if not close.fuel_balance_line_ids:
                 raise ValidationError(
-                    "Prepare fuel balancing lines before approval."
+                    "No fuel balance lines found. "
+                    "Use 'Prepare Shift Close' to create balancing lines before approving."
                 )
             close.write(
                 {
@@ -247,3 +301,24 @@ class FuelStationShiftClose(models.Model):
                     "approved_at": fields.Datetime.now(),
                 }
             )
+
+    def action_open_sessions(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Attendant Sessions',
+            'res_model': 'fuel.attendant.session',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.attendant_session_ids.ids)],
+        }
+
+    def action_open_credit_payments(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Credit Payments',
+            'res_model': 'fuel.credit.payment',
+            'view_mode': 'list,form',
+            'domain': [('station_close_id', '=', self.id)],
+            'context': {'default_station_close_id': self.id},
+        }

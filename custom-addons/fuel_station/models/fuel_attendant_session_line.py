@@ -12,7 +12,7 @@ class FuelAttendantSessionLine(models.Model):
     )
 
     # Stored related fields so we can ORDER BY them in search() calls.
-    date = fields.Date(related="session_id.date", store=True, readonly=True)
+    date = fields.Date(related="session_id.date", store=True, readonly=True, index=True)
     shift_id = fields.Many2one(related="session_id.shift_id", store=True, readonly=True)
 
     pump_id = fields.Many2one("fuel.pump", required=True)

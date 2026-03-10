@@ -6,6 +6,7 @@ class FuelCreditSale(models.Model):
     _name = "fuel.credit.sale"
     _description = "Fuel Credit Sale"
     _order = "date desc, id desc"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(default="New", readonly=True)
     date = fields.Datetime(required=True, default=fields.Datetime.now)
@@ -27,6 +28,46 @@ class FuelCreditSale(models.Model):
 
     session_id = fields.Many2one("fuel.attendant.session", index=True)
     station_close_id = fields.Many2one("fuel.station.shift.close", index=True)
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
+
+    # ------------------------------------------------------------------
+    # Outstanding balance tracking
+    # ------------------------------------------------------------------
+
+    payment_ids = fields.One2many(
+        "fuel.credit.payment",
+        "credit_sale_id",
+        string="Payments",
+        readonly=True,
+    )
+    amount_paid = fields.Float(
+        string="Amount Paid",
+        compute="_compute_outstanding",
+        store=True,
+        digits=(16, 2),
+    )
+    amount_outstanding = fields.Float(
+        string="Outstanding",
+        compute="_compute_outstanding",
+        store=True,
+        digits=(16, 2),
+    )
+    payment_state = fields.Selection(
+        [
+            ("unpaid", "Unpaid"),
+            ("partial", "Partial"),
+            ("paid", "Paid"),
+        ],
+        string="Payment Status",
+        compute="_compute_outstanding",
+        store=True,
+        default="unpaid",
+    )
 
     # ------------------------------------------------------------------
     # ORM overrides
@@ -52,6 +93,24 @@ class FuelCreditSale(models.Model):
     def _compute_amount(self):
         for rec in self:
             rec.amount = (rec.litres or 0.0) * (rec.price or 0.0)
+
+    @api.depends("payment_ids.amount_paid", "amount")
+    def _compute_outstanding(self):
+        for rec in self:
+            paid = sum(rec.payment_ids.mapped("amount_paid"))
+            rec.amount_paid = paid
+            rec.amount_outstanding = max((rec.amount or 0.0) - paid, 0.0)
+            if paid <= 0:
+                rec.payment_state = "unpaid"
+            elif rec.amount_outstanding > 0:
+                rec.payment_state = "partial"
+            else:
+                rec.payment_state = "paid"
+
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id
 
     # ------------------------------------------------------------------
     # Constraints

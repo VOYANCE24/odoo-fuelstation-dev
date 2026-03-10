@@ -6,6 +6,7 @@ class FuelDelivery(models.Model):
     _name = "fuel.delivery"
     _description = "Fuel Delivery Measurements"
     _order = "id desc"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(
         string="Delivery Ref",
@@ -13,10 +14,8 @@ class FuelDelivery(models.Model):
         default=lambda self: self.env["ir.sequence"].next_by_code("fuel.delivery") or "New",
     )
 
-    delivery_date = fields.Date(default=fields.Date.context_today, required=True)
+    delivery_date = fields.Date(default=fields.Date.context_today, required=True, index=True)
 
-    # Single, authoritative state definition.
-    # Removed the duplicate ("draft","done") definition that previously shadowed this one.
     state = fields.Selection(
         [
             ("draft", "Draft"),
@@ -25,6 +24,7 @@ class FuelDelivery(models.Model):
         ],
         default="draft",
         required=True,
+        index=True,
     )
 
     picking_id = fields.Many2one(
@@ -70,8 +70,16 @@ class FuelDelivery(models.Model):
     # ------------------------------------------------------------------
 
     def _compute_fuel_delivery_count(self):
+        # Use read_group to count per picking in a single SQL query.
+        picking_ids = self.mapped("picking_id").ids
+        groups = self.read_group(
+            domain=[("picking_id", "in", picking_ids)],
+            fields=["picking_id"],
+            groupby=["picking_id"],
+        )
+        count_by_picking = {g["picking_id"][0]: g["picking_id_count"] for g in groups}
         for rec in self:
-            rec.fuel_delivery_count = self.search_count([("picking_id", "=", rec.picking_id.id)])
+            rec.fuel_delivery_count = count_by_picking.get(rec.picking_id.id, 0)
 
     # ------------------------------------------------------------------
     # State transitions
@@ -138,6 +146,17 @@ class FuelDelivery(models.Model):
                     "None of the picking's move products matched the compartment lines. "
                     "Check that the products are consistent."
                 )
+
+            # Auto-populate delivery_line_ids from compartment measurements so
+            # fuel balance lines can read received litres without manual entry.
+            # Remove existing lines first to avoid duplication on re-apply.
+            rec.delivery_line_ids.unlink()
+            for product_id, qty in product_qty_map.items():
+                self.env["fuel.delivery.line"].create({
+                    "delivery_id": rec.id,
+                    "product_id": product_id,
+                    "received_litres": qty,
+                })
 
             rec.state = "applied"
 

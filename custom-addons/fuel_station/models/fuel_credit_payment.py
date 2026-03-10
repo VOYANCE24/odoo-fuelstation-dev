@@ -23,6 +23,22 @@ class FuelCreditPayment(models.Model):
 
     station_close_id = fields.Many2one("fuel.station.shift.close", index=True)
 
+    # Optional link back to the originating credit sale.
+    # When set, the credit sale's outstanding balance and state are updated automatically.
+    credit_sale_id = fields.Many2one(
+        "fuel.credit.sale",
+        string="Credit Sale",
+        index=True,
+        ondelete="set null",
+        help="Link this payment to a specific credit sale to track its outstanding balance.",
+    )
+
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
+
     # ------------------------------------------------------------------
     # ORM overrides
     # ------------------------------------------------------------------
@@ -45,6 +61,11 @@ class FuelCreditPayment(models.Model):
                     or "CP/"
                 )
         return super().create(vals_list)
+
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id
 
     # ------------------------------------------------------------------
     # Constraints
