@@ -29,6 +29,7 @@
     <!-- ── Master Data ───────────────────────────────────── -->
     <menuitem id="menu_shifts"     name="Shifts"          parent="fuel_station_master_menu" action="action_fuel_shifts"     sequence="10"/>
     <menuitem id="menu_pumps"      name="Pumps"           parent="fuel_station_master_menu" action="action_fuel_pumps"      sequence="20"/>
+    <menuitem id="menu_nozzles"    name="Nozzles"         parent="fuel_station_master_menu" action="action_fuel_nozzles"    sequence="25"/>
     <menuitem id="menu_attendants" name="Pump Attendants" parent="fuel_station_master_menu" action="action_fuel_attendants" sequence="30"/>
 
     <!-- ── Configuration ─────────────────────────────────── -->

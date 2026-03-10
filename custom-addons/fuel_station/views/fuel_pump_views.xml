@@ -30,6 +30,17 @@
               <field name="product_id"/>
               <field name="active"/>
             </group>
+            <notebook>
+              <page string="Nozzles" name="nozzles">
+                <field name="nozzle_ids">
+                  <list editable="bottom">
+                    <field name="nozzle_number" string="Nozzle #"/>
+                    <field name="name"/>
+                    <field name="active" optional="hide"/>
+                  </list>
+                </field>
+              </page>
+            </notebook>
           </sheet>
         </form>
       </field>

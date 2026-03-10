@@ -8,6 +8,7 @@ from . import calibration
 from . import product_fuel_extend      # extends product.template with fuel fields
 from . import fuel_shift
 from . import fuel_pump
+from . import fuel_nozzle      # fuel.nozzle depends on fuel.pump
 from . import fuel_attendant
 
 # -- Stock / delivery --

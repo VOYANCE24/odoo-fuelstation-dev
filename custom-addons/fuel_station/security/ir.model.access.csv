@@ -7,6 +7,8 @@ access_fuel_shift_user,fuel.shift read,model_fuel_shift,base.group_user,1,0,0,0
 access_fuel_shift_manager,fuel.shift manager,model_fuel_shift,fuel_station.group_fuel_manager,1,1,1,1
 access_fuel_pump_user,fuel.pump read,model_fuel_pump,base.group_user,1,0,0,0
 access_fuel_pump_manager,fuel.pump manager,model_fuel_pump,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_nozzle_user,fuel.nozzle read,model_fuel_nozzle,base.group_user,1,0,0,0
+access_fuel_nozzle_manager,fuel.nozzle manager,model_fuel_nozzle,fuel_station.group_fuel_manager,1,1,1,1
 access_fuel_attendant_user,fuel.attendant read,model_fuel_attendant,base.group_user,1,0,0,0
 access_fuel_attendant_manager,fuel.attendant manager,model_fuel_attendant,fuel_station.group_fuel_manager,1,1,1,1
 access_fuel_delivery_manager,fuel.delivery manager,model_fuel_delivery,fuel_station.group_fuel_manager,1,1,1,1

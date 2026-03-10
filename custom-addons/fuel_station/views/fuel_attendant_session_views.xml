@@ -131,7 +131,8 @@
               <page string="Sales" name="sales">
                 <field name="line_ids">
                   <list editable="bottom">
-                    <field name="pump_id"/>
+                    <field name="nozzle_id" domain="[('active','=',True)]"/>
+                    <field name="pump_id" readonly="1" optional="show"/>
                     <field name="product_id" readonly="1"/>
                     <field name="previous_meter" readonly="1"/>
                     <field name="current_meter"/>

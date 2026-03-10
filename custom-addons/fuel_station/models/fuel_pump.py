@@ -14,3 +14,4 @@ class FuelPump(models.Model):
         string="Fuel Product"
     )
     active = fields.Boolean(default=True)
+    nozzle_ids = fields.One2many("fuel.nozzle", "pump_id", string="Nozzles")

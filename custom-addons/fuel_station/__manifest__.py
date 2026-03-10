@@ -31,6 +31,7 @@
 
         'views/fuel_shift_views.xml',
         'views/fuel_pump_views.xml',
+        'views/fuel_nozzle_views.xml',
         'views/fuel_attendant_views.xml',
         'views/fuel_credit_sale_views.xml',
         'views/fuel_cash_deposit_views.xml',
