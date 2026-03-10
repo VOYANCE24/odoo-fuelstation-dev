@@ -1,22 +1,29 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_fuel_delivery_user,fuel.delivery user,model_fuel_delivery,base.group_user,1,1,1,0
-access_fuel_delivery_compartment_user,fuel.delivery.compartment user,model_fuel_delivery_compartment,base.group_user,1,1,1,0
-access_fuel_delivery_tankdip_user,fuel.delivery.tankdip user,model_fuel_delivery_tankdip,base.group_user,1,1,1,0
-access_fuel_calibration_profile_user,fuel.calibration.profile user,model_fuel_calibration_profile,base.group_user,1,1,1,0
-access_fuel_calibration_line_user,fuel.calibration.line user,model_fuel_calibration_line,base.group_user,1,1,1,0
-
-access_fuel_shift,fuel.shift,model_fuel_shift,base.group_user,1,1,1,0
-access_fuel_pump,fuel.pump,model_fuel_pump,base.group_user,1,1,1,0
-access_fuel_attendant,fuel.attendant,model_fuel_attendant,base.group_user,1,1,1,0
-
-access_fuel_credit_sale,fuel.credit.sale,model_fuel_credit_sale,base.group_user,1,1,1,0
-access_fuel_cash_deposit,fuel.cash.deposit,model_fuel_cash_deposit,base.group_user,1,1,1,0
-access_fuel_credit_payment,fuel.credit.payment,model_fuel_credit_payment,base.group_user,1,1,1,0
-
-access_fuel_attendant_session,fuel.attendant.session,model_fuel_attendant_session,base.group_user,1,1,1,0
-access_fuel_attendant_session_line,fuel.attendant.session.line,model_fuel_attendant_session_line,base.group_user,1,1,1,0
-
-access_fuel_station_shift_close,fuel.station.shift.close,model_fuel_station_shift_close,base.group_user,1,1,1,0
-access_fuel_station_fuel_balance_line,fuel.station.fuel.balance.line,model_fuel_station_fuel_balance_line,base.group_user,1,1,1,0
-
-access_fuel_delivery_line,fuel.delivery.line,model_fuel_delivery_line,base.group_user,1,1,1,0
+access_fuel_calibration_profile_user,fuel.calibration.profile read,model_fuel_calibration_profile,base.group_user,1,0,0,0
+access_fuel_calibration_profile_manager,fuel.calibration.profile manager,model_fuel_calibration_profile,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_calibration_line_user,fuel.calibration.line read,model_fuel_calibration_line,base.group_user,1,0,0,0
+access_fuel_calibration_line_manager,fuel.calibration.line manager,model_fuel_calibration_line,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_shift_user,fuel.shift read,model_fuel_shift,base.group_user,1,0,0,0
+access_fuel_shift_manager,fuel.shift manager,model_fuel_shift,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_pump_user,fuel.pump read,model_fuel_pump,base.group_user,1,0,0,0
+access_fuel_pump_manager,fuel.pump manager,model_fuel_pump,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_attendant_user,fuel.attendant read,model_fuel_attendant,base.group_user,1,0,0,0
+access_fuel_attendant_manager,fuel.attendant manager,model_fuel_attendant,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_delivery_manager,fuel.delivery manager,model_fuel_delivery,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_delivery_compartment_manager,fuel.delivery.compartment manager,model_fuel_delivery_compartment,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_delivery_tankdip_manager,fuel.delivery.tankdip manager,model_fuel_delivery_tankdip,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_delivery_line_manager,fuel.delivery.line manager,model_fuel_delivery_line,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_credit_sale_user,fuel.credit.sale user,model_fuel_credit_sale,fuel_station.group_fuel_user,1,1,1,0
+access_fuel_credit_sale_manager,fuel.credit.sale manager,model_fuel_credit_sale,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_cash_deposit_user,fuel.cash.deposit user,model_fuel_cash_deposit,fuel_station.group_fuel_user,1,1,1,0
+access_fuel_cash_deposit_manager,fuel.cash.deposit manager,model_fuel_cash_deposit,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_credit_payment_manager,fuel.credit.payment manager,model_fuel_credit_payment,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_attendant_session_user,fuel.attendant.session user,model_fuel_attendant_session,fuel_station.group_fuel_user,1,1,1,0
+access_fuel_attendant_session_manager,fuel.attendant.session manager,model_fuel_attendant_session,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_attendant_session_line_user,fuel.attendant.session.line user,model_fuel_attendant_session_line,fuel_station.group_fuel_user,1,1,1,0
+access_fuel_attendant_session_line_manager,fuel.attendant.session.line manager,model_fuel_attendant_session_line,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_station_shift_close_manager,fuel.station.shift.close manager,model_fuel_station_shift_close,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_station_fuel_balance_line_manager,fuel.station.fuel.balance.line manager,model_fuel_station_fuel_balance_line,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_dashboard_manager,fuel.dashboard manager,model_fuel_dashboard,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_dashboard_tank_level_manager,fuel.dashboard.tank.level manager,model_fuel_dashboard_tank_level,fuel_station.group_fuel_manager,1,1,1,1
+access_fuel_dashboard_attendant_rank_manager,fuel.dashboard.attendant.rank manager,model_fuel_dashboard_attendant_rank,fuel_station.group_fuel_manager,1,1,1,1

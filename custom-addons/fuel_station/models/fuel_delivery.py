@@ -6,13 +6,26 @@ class FuelDelivery(models.Model):
     _name = "fuel.delivery"
     _description = "Fuel Delivery Measurements"
     _order = "id desc"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    name = fields.Char(string="Delivery Ref", required=True, default=lambda self: self.env["ir.sequence"].next_by_code("fuel.delivery") or "New")
+    name = fields.Char(
+        string="Delivery Ref",
+        required=True,
+        default=lambda self: self.env["ir.sequence"].next_by_code("fuel.delivery") or "New",
+    )
 
-    delivery_date = fields.Date(default=fields.Date.context_today, required=True)
-    state = fields.Selection([("draft", "Draft"), ("done", "Done")], default="draft", required=True)
+    delivery_date = fields.Date(default=fields.Date.context_today, required=True, index=True)
 
-    delivery_line_ids = fields.One2many("fuel.delivery.line", "delivery_id", string="Delivered Litres")
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("measured", "Measured"),
+            ("applied", "Applied to Stock"),
+        ],
+        default="draft",
+        required=True,
+        index=True,
+    )
 
     picking_id = fields.Many2one(
         "stock.picking",
@@ -23,16 +36,6 @@ class FuelDelivery(models.Model):
     )
 
     truck_id = fields.Char(string="Truck ID / Plate")
-
-    state = fields.Selection(
-        [
-            ("draft", "Draft"),
-            ("measured", "Measured"),
-            ("applied", "Applied to Stock"),
-        ],
-        default="draft",
-        required=True,
-    )
 
     compartment_line_ids = fields.One2many(
         "fuel.delivery.compartment",
@@ -48,16 +51,55 @@ class FuelDelivery(models.Model):
         copy=True,
     )
 
+    # Explicit delivery lines (per-product received litres) used by balance lines.
+    delivery_line_ids = fields.One2many(
+        "fuel.delivery.line",
+        "delivery_id",
+        string="Delivered Litres",
+    )
+
+    fuel_delivery_count = fields.Integer(
+        compute="_compute_fuel_delivery_count",
+        string="Fuel Deliveries",
+    )
+
     notes = fields.Text()
+
+    # ------------------------------------------------------------------
+    # Compute
+    # ------------------------------------------------------------------
+
+    def _compute_fuel_delivery_count(self):
+        # Use read_group to count per picking in a single SQL query.
+        picking_ids = self.mapped("picking_id").ids
+        groups = self.read_group(
+            domain=[("picking_id", "in", picking_ids)],
+            fields=["picking_id"],
+            groupby=["picking_id"],
+        )
+        count_by_picking = {g["picking_id"][0]: g["picking_id_count"] for g in groups}
+        for rec in self:
+            rec.fuel_delivery_count = count_by_picking.get(rec.picking_id.id, 0)
+
+    # ------------------------------------------------------------------
+    # State transitions
+    # ------------------------------------------------------------------
 
     def action_mark_measured(self):
         for rec in self:
+            if rec.state != "draft":
+                continue
             rec.state = "measured"
 
     def action_apply_measured_quantities(self):
         """
-        Update stock moves (picking moves) quantities based on measured liters.
-        - We do not block on mismatch; we just record and adjust move qty_done.
+        Write measured compartment volumes back to the linked stock picking's move lines.
+
+        Odoo 17+ removed `quantity_done` on stock.move in favour of `quantity` on
+        stock.move.line.  We update the move's `quantity` field (which in Odoo 17/18/19
+        is the immediate-transfer quantity on the move level, auto-synced to move lines).
+
+        If the picking is already done/cancelled we skip it gracefully.
         """
         for rec in self:
             if not rec.picking_id:
@@ -65,30 +107,63 @@ class FuelDelivery(models.Model):
 
             picking = rec.picking_id
 
-            # Sum measured liters per product from compartments
-            product_qty_map = {}
+            if picking.state in ("done", "cancel"):
+                raise ValidationError(
+                    f"Picking {picking.name} is already {picking.state}. "
+                    "Cannot apply measured quantities."
+                )
+
+            # Sum measured liters per product from compartment lines.
+            product_qty_map: dict[int, float] = {}
             for line in rec.compartment_line_ids:
                 if not line.product_id:
                     continue
                 product_qty_map.setdefault(line.product_id.id, 0.0)
-                product_qty_map[line.product_id.id] += (line.measured_volume_liters or 0.0)
+                product_qty_map[line.product_id.id] += line.measured_volume_liters or 0.0
 
             if not product_qty_map:
-                raise ValidationError("No measured volumes found on compartment lines.")
+                raise ValidationError(
+                    "No measured volumes found on compartment lines. "
+                    "Please fill in measured depth and calibration profiles first."
+                )
 
-            # Update picking stock moves
-            moves = picking.move_ids.filtered(lambda m: m.product_id and m.state not in ("done", "cancel"))
+            # Apply to stock moves.
+            # In Odoo 17+ the immediate qty on a move is `move.quantity`.
+            # `quantity_done` is a computed summary and is read-only.
+            moves = picking.move_ids.filtered(
+                lambda m: m.product_id and m.state not in ("done", "cancel")
+            )
+            updated = False
             for move in moves:
                 measured_qty = product_qty_map.get(move.product_id.id)
                 if measured_qty is None:
                     continue
+                move.quantity = measured_qty
+                updated = True
 
-                # Set qty_done to measured liters (assuming UoM is Liters or convertible)
-                # For v1 we assume product UoM is compatible with liters.
-                move.quantity_done = measured_qty
+            if not updated:
+                raise ValidationError(
+                    "None of the picking's move products matched the compartment lines. "
+                    "Check that the products are consistent."
+                )
+
+            # Auto-populate delivery_line_ids from compartment measurements so
+            # fuel balance lines can read received litres without manual entry.
+            # Remove existing lines first to avoid duplication on re-apply.
+            rec.delivery_line_ids.unlink()
+            for product_id, qty in product_qty_map.items():
+                self.env["fuel.delivery.line"].create({
+                    "delivery_id": rec.id,
+                    "product_id": product_id,
+                    "received_litres": qty,
+                })
 
             rec.state = "applied"
 
+
+# ---------------------------------------------------------------------------
+# Compartment measurement
+# ---------------------------------------------------------------------------
 
 class FuelDeliveryCompartment(models.Model):
     _name = "fuel.delivery.compartment"
@@ -98,7 +173,11 @@ class FuelDeliveryCompartment(models.Model):
     delivery_id = fields.Many2one("fuel.delivery", required=True, ondelete="cascade")
     sequence = fields.Integer(default=10)
 
-    compartment_code = fields.Char(string="Compartment", required=True, help="Identifier e.g. C1, C2, 1, 2, etc.")
+    compartment_code = fields.Char(
+        string="Compartment",
+        required=True,
+        help="Identifier e.g. C1, C2, 1, 2, etc.",
+    )
 
     product_id = fields.Many2one(
         "product.product",
@@ -107,7 +186,7 @@ class FuelDeliveryCompartment(models.Model):
         domain="[('id', 'in', picking_product_ids)]",
     )
 
-    # helper: allowed products from picking lines
+    # Helper: allowed products from the linked picking's moves.
     picking_product_ids = fields.Many2many(
         "product.product",
         compute="_compute_picking_products",
@@ -117,11 +196,15 @@ class FuelDeliveryCompartment(models.Model):
 
     expected_depth_mm = fields.Float(string="Expected Depth (mm)")
     measured_depth_mm = fields.Float(string="Measured Depth (mm)")
-    depth_diff_mm = fields.Float(string="Depth Diff (mm)", compute="_compute_diffs", store=False)
+    depth_diff_mm = fields.Float(
+        string="Depth Diff (mm)", compute="_compute_diffs", store=False
+    )
 
     expected_density = fields.Float(string="Expected Density")
     measured_density = fields.Float(string="Measured Density")
-    density_diff = fields.Float(string="Density Diff", compute="_compute_diffs", store=False)
+    density_diff = fields.Float(
+        string="Density Diff", compute="_compute_diffs", store=False
+    )
 
     calibration_profile_id = fields.Many2one(
         "fuel.calibration.profile",
@@ -141,7 +224,11 @@ class FuelDeliveryCompartment(models.Model):
     def _compute_picking_products(self):
         for rec in self:
             picking = rec.delivery_id.picking_id
-            products = picking.move_ids.mapped("product_id") if picking else self.env["product.product"]
+            products = (
+                picking.move_ids.mapped("product_id")
+                if picking
+                else self.env["product.product"]
+            )
             rec.picking_product_ids = [(6, 0, products.ids)]
 
     @api.depends("expected_depth_mm", "measured_depth_mm", "expected_density", "measured_density")
@@ -154,10 +241,16 @@ class FuelDeliveryCompartment(models.Model):
     def _compute_measured_volume(self):
         for rec in self:
             if rec.calibration_profile_id and rec.measured_depth_mm is not False:
-                rec.measured_volume_liters = rec.calibration_profile_id.volume_from_depth_mm(rec.measured_depth_mm)
+                rec.measured_volume_liters = rec.calibration_profile_id.volume_from_depth_mm(
+                    rec.measured_depth_mm
+                )
             else:
                 rec.measured_volume_liters = 0.0
 
+
+# ---------------------------------------------------------------------------
+# Tank dip
+# ---------------------------------------------------------------------------
 
 class FuelDeliveryTankDip(models.Model):
     _name = "fuel.delivery.tankdip"
@@ -167,7 +260,9 @@ class FuelDeliveryTankDip(models.Model):
     delivery_id = fields.Many2one("fuel.delivery", required=True, ondelete="cascade")
     sequence = fields.Integer(default=10)
 
-    tank_code = fields.Char(string="Tank", required=True, help="Identifier e.g. PMS-1, AGO-1")
+    tank_code = fields.Char(
+        string="Tank", required=True, help="Identifier e.g. PMS-1, AGO-1"
+    )
 
     product_id = fields.Many2one(
         "product.product",
@@ -193,23 +288,37 @@ class FuelDeliveryTankDip(models.Model):
     depth_before_mm = fields.Float(string="Depth Before (mm)")
     depth_after_mm = fields.Float(string="Depth After (mm)")
 
-    volume_before_liters = fields.Float(string="Volume Before (L)", compute="_compute_volumes", store=False)
-    volume_after_liters = fields.Float(string="Volume After (L)", compute="_compute_volumes", store=False)
-    delta_volume_liters = fields.Float(string="Delta (L)", compute="_compute_volumes", store=False)
+    volume_before_liters = fields.Float(
+        string="Volume Before (L)", compute="_compute_volumes", store=False
+    )
+    volume_after_liters = fields.Float(
+        string="Volume After (L)", compute="_compute_volumes", store=False
+    )
+    delta_volume_liters = fields.Float(
+        string="Delta (L)", compute="_compute_volumes", store=False
+    )
 
     @api.depends("delivery_id.picking_id")
     def _compute_picking_products(self):
         for rec in self:
             picking = rec.delivery_id.picking_id
-            products = picking.move_ids.mapped("product_id") if picking else self.env["product.product"]
+            products = (
+                picking.move_ids.mapped("product_id")
+                if picking
+                else self.env["product.product"]
+            )
             rec.picking_product_ids = [(6, 0, products.ids)]
 
     @api.depends("depth_before_mm", "depth_after_mm", "calibration_profile_id")
     def _compute_volumes(self):
         for rec in self:
             if rec.calibration_profile_id:
-                rec.volume_before_liters = rec.calibration_profile_id.volume_from_depth_mm(rec.depth_before_mm)
-                rec.volume_after_liters = rec.calibration_profile_id.volume_from_depth_mm(rec.depth_after_mm)
+                rec.volume_before_liters = rec.calibration_profile_id.volume_from_depth_mm(
+                    rec.depth_before_mm
+                )
+                rec.volume_after_liters = rec.calibration_profile_id.volume_from_depth_mm(
+                    rec.depth_after_mm
+                )
             else:
                 rec.volume_before_liters = 0.0
                 rec.volume_after_liters = 0.0

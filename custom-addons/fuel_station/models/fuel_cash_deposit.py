@@ -19,13 +19,25 @@ class FuelCashDeposit(models.Model):
     session_id = fields.Many2one("fuel.attendant.session", index=True)
     station_close_id = fields.Many2one("fuel.station.shift.close", index=True)
 
+    currency_id = fields.Many2one(
+        'res.currency',
+        compute='_compute_currency_id',
+        string='Currency',
+    )
+
     @api.model_create_multi
     def create(self, vals_list):
-        seq = self.env["ir.sequence"].next_by_code("fuel.cash.deposit") or "CD/"
         for vals in vals_list:
             if vals.get("name", "New") == "New":
-                vals["name"] = seq
+                vals["name"] = (
+                    self.env["ir.sequence"].next_by_code("fuel.cash.deposit") or "CD/"
+                )
         return super().create(vals_list)
+
+    @api.depends_context('company')
+    def _compute_currency_id(self):
+        for rec in self:
+            rec.currency_id = self.env.company.currency_id
 
     @api.constrains("amount")
     def _check_amount(self):

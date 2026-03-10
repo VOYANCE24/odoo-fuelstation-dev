@@ -6,14 +6,16 @@
       <field name="name">fuel.shift.tree</field>
       <field name="model">fuel.shift</field>
       <field name="arch" type="xml">
-        <tree>
-          <field name="sequence"/>
+        <list>
+          <field name="sequence" widget="handle"/>
           <field name="name"/>
-          <field name="code"/>
-          <field name="start_time"/>
-          <field name="end_time"/>
-          <field name="active"/>
-        </tree>
+          <field name="code" widget="badge"
+                 decoration-info="code == 'day'"
+                 decoration-warning="code == 'night'"/>
+          <field name="start_time" widget="float_time"/>
+          <field name="end_time" widget="float_time"/>
+          <field name="active" optional="hide"/>
+        </list>
       </field>
     </record>
 
@@ -23,25 +25,52 @@
       <field name="arch" type="xml">
         <form>
           <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" placeholder="e.g. Day Shift"/></h1>
+            </div>
             <group>
-              <field name="name"/>
-              <field name="code"/>
-              <field name="sequence"/>
-              <field name="active"/>
-            </group>
-            <group string="Shift Window">
-              <field name="start_time"/>
-              <field name="end_time"/>
+              <group>
+                <field name="code"/>
+                <field name="sequence"/>
+                <field name="active"/>
+              </group>
+              <group string="Shift Window">
+                <field name="start_time" widget="float_time"/>
+                <field name="end_time" widget="float_time"/>
+              </group>
             </group>
           </sheet>
         </form>
       </field>
     </record>
 
+    <record id="view_fuel_shift_search" model="ir.ui.view">
+      <field name="name">fuel.shift.search</field>
+      <field name="model">fuel.shift</field>
+      <field name="arch" type="xml">
+        <search string="Search Shifts">
+          <field name="name"/>
+          <filter string="Day Shifts" name="day" domain="[('code','=','day')]"/>
+          <filter string="Night Shifts" name="night" domain="[('code','=','night')]"/>
+          <separator/>
+          <filter string="Active" name="active" domain="[('active','=',True)]"/>
+          <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
+        </search>
+      </field>
+    </record>
+
     <record id="action_fuel_shifts" model="ir.actions.act_window">
       <field name="name">Shifts</field>
       <field name="res_model">fuel.shift</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_shift_search"/>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          Create your first shift definition.
+        </p>
+        <p>Define Day and Night shifts with their time windows.</p>
+      </field>
     </record>
 
   </data>

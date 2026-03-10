@@ -1,28 +1,29 @@
 {
     'name': "Fuel Station Module",
-
     'summary': "Module to manage a fuel station.",
-
     'description': """
-Long description of module's purpose
+        Fuel Station Management: deliveries, pump sessions, shift closes,
+        credit sales, cash reconciliation, and dashboard.
     """,
-
     'author': "Voyance Consulting Co. Limited",
     'website': "https://www.voyanceconsults.com",
-
-    # Categories can be used to filter modules in modules listing
-    # Check https://github.com/odoo/odoo/blob/15.0/odoo/addons/base/data/ir_module_category_data.xml
-    # for the full list
     'category': 'Fuel Station',
-    'version': '0.1',
+    'version': '0.5',
 
-    # any module necessary for this one to work correctly
-    'depends': ['base', 'product', 'purchase', 'stock', 'hr'],
+    'depends': ['base', 'mail', 'product', 'purchase', 'stock', 'hr'],
 
-    # always loaded
+    'assets': {
+        'web.assets_backend': [
+            'fuel_station/static/src/scss/fuel_station.scss',
+        ],
+    },
+
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'data/sequence.xml',
+
+        # Core views
         'views/fuel_delivery_views.xml',
         'views/calibration_views.xml',
         'views/stock_picking_actions.xml',
@@ -36,6 +37,11 @@ Long description of module's purpose
         'views/fuel_credit_payment_views.xml',
         'views/fuel_attendant_session_views.xml',
         'views/fuel_station_shift_close_views.xml',
+
+        # Dashboard (must come after all model views so server action
+        # can reference them; also after product views so the inherit works)
+        'views/fuel_dashboard_views.xml',
+
         'views/menu.xml',
     ],
 
@@ -43,4 +49,3 @@ Long description of module's purpose
     'application': True,
     'license': 'LGPL-3',
 }
-

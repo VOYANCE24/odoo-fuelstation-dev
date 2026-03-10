@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- ================================================================
+         Fuel Station security groups
+         ================================================================
+
+         group_fuel_user   — Pump Attendants
+             Can create credit sales and cash deposits for their own shift.
+             Read-only on master data (pumps, shifts, attendants).
+
+         group_fuel_manager — Shift Supervisors / Managers
+             Full access: approve sessions and shift closes, manage
+             deliveries, credit payments, dashboard, and master data.
+             Inherits group_fuel_user.
+    ================================================================ -->
+
+    <record id="group_fuel_user" model="res.groups">
+      <field name="name">Fuel Station / User</field>
+      <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="group_fuel_manager" model="res.groups">
+      <field name="name">Fuel Station / Manager</field>
+      <field name="implied_ids" eval="[(4, ref('fuel_station.group_fuel_user'))]"/>
+    </record>
+
+  </data>
+</odoo>

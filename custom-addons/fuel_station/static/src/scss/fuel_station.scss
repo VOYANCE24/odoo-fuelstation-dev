@@ -1,0 +1,433 @@
+// ============================================================
+//  Fuel Station — Enterprise-Style Theme
+//
+//  Replicates Odoo Enterprise's colour palette and UI patterns
+//  on Odoo 19 Community without requiring web_enterprise.
+//
+//  Enterprise palette (from Odoo source: primary_variables.scss):
+//    $o-enterprise-color:        #714B67  (dark mauve)
+//    $o-enterprise-action-color: #017e84  (teal)
+//
+//  Strategy: Bootstrap 5 utility classes are driven by CSS
+//  custom properties at runtime, so we override them on :root
+//  to instantly repaint ALL backend views without recompiling
+//  Odoo's SASS bundles. Structural overrides (navbar bg, form
+//  sheet) use direct CSS selectors.
+// ============================================================
+
+
+// ════════════════════════════════════════════════════════════
+// 1. Bootstrap 5 CSS Custom Property Overrides (runtime repainting)
+//    Affects: btn-primary, text-primary, bg-primary,
+//             border-primary, links, focus rings …
+// ════════════════════════════════════════════════════════════
+:root {
+  // — Enterprise primary: dark mauve ————————————————————————
+  --bs-primary:              #714b67;
+  --bs-primary-rgb:          113, 75, 103;
+
+  // — Enterprise action / links: teal ───────────────────────
+  --bs-link-color:           #017e84;
+  --bs-link-color-rgb:       1, 126, 132;
+  --bs-link-hover-color:     #015e64;
+
+  // — Focus ring: teal halo ─────────────────────────────────
+  --bs-focus-ring-color:     rgba(1, 126, 132, 0.25);
+
+  // — Body surface: Enterprise warm-gray ────────────────────
+  --bs-body-bg:              #f3f2f1;
+
+  // — Card refinements ──────────────────────────────────────
+  --bs-card-border-radius:   0.5rem;
+  --bs-border-radius:        0.375rem;
+
+  // — Badge colours pulled from Odoo theme maps ─────────────
+  --bs-success:              #28a745;
+  --bs-warning:              #ffac00;
+  --bs-danger:               #dc3545;
+  --bs-info:                 #017e84;         // Use teal for info
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 2. Top Navbar — Enterprise dark mauve
+// ════════════════════════════════════════════════════════════
+.o_main_navbar {
+  background: #714b67 !important;
+  border-bottom: 1px solid #5c3b53 !important;
+
+  // All child text/icon entries
+  .o_menu_brand,
+  .o_menu_sections > li > a,
+  .o_menu_sections > li > button,
+  .o_nav_entry,
+  .o_debug_manager .btn,
+  .o_user_menu .btn,
+  .o_cp_action_menus .btn {
+    color: rgba(255, 255, 255, 0.90) !important;
+
+    &:hover,
+    &:focus {
+      color: #fff !important;
+      background-color: rgba(0, 0, 0, 0.10) !important;
+    }
+  }
+
+  // Active / current application highlight
+  .o_nav_entry.active {
+    background-color: rgba(0, 0, 0, 0.15) !important;
+    color: #fff !important;
+  }
+
+  // Icons inside the navbar
+  .fa,
+  .oi {
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 3. App Switcher / Home Menu backdrop
+// ════════════════════════════════════════════════════════════
+.o_home_menu_background,
+.o_home_menu {
+  background-color: #714b67 !important;
+  background-image: none !important;
+}
+
+.o_app_icon .o_app_name {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 4. Primary Buttons — Enterprise mauve
+// ════════════════════════════════════════════════════════════
+.btn-primary {
+  --bs-btn-color:             #fff;
+  --bs-btn-bg:                #714b67;
+  --bs-btn-border-color:      #714b67;
+  --bs-btn-hover-color:       #fff;
+  --bs-btn-hover-bg:          #5c3b53;
+  --bs-btn-hover-border-color:#4e3047;
+  --bs-btn-active-color:      #fff;
+  --bs-btn-active-bg:         #4e3047;
+  --bs-btn-active-border-color:#3f2739;
+  --bs-btn-focus-shadow-rgb:  113, 75, 103;
+}
+
+// Secondary / outline secondary
+.btn-outline-primary {
+  --bs-btn-color:             #714b67;
+  --bs-btn-border-color:      #714b67;
+  --bs-btn-hover-color:       #fff;
+  --bs-btn-hover-bg:          #714b67;
+  --bs-btn-hover-border-color:#714b67;
+  --bs-btn-active-color:      #fff;
+  --bs-btn-active-bg:         #5c3b53;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 5. Links & text-primary repaint
+// ════════════════════════════════════════════════════════════
+a:not(.btn):not(.nav-link):not(.badge) {
+  color: #017e84;
+
+  &:hover {
+    color: #015e64;
+  }
+}
+
+.text-primary   { color: #714b67 !important; }
+.border-primary { border-color: #714b67 !important; }
+.bg-primary     { background-color: #714b67 !important; }
+
+
+// ════════════════════════════════════════════════════════════
+// 6. Form View — Enterprise surface & sheet
+// ════════════════════════════════════════════════════════════
+.o_form_view {
+  background-color: #f3f2f1;
+
+  // Outer sheet background
+  .o_form_sheet_bg {
+    background-color: #f3f2f1;
+  }
+
+  // The white card that contains the actual form fields
+  .o_form_sheet {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07),
+                0 2px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  // Required field border indicator — teal
+  .o_field_widget.o_required_modifier .o_input,
+  .o_field_widget.o_required_modifier textarea {
+    border-left-color: #017e84;
+  }
+
+  // Separator lines
+  .o_horizontal_separator {
+    color: #714b67;
+    font-weight: 600;
+    border-color: rgba(113, 75, 103, 0.15);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 7. Stat Buttons (oe_button_box) — teal values, dividers
+// ════════════════════════════════════════════════════════════
+.o-form-buttonbox {
+  .oe_stat_button {
+    border-right: 1px solid #dee2e6;
+    transition: background-color 0.15s ease;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    .o_stat_value,
+    .o_button_icon {
+      color: #017e84 !important;
+    }
+
+    &:hover {
+      background-color: rgba(1, 126, 132, 0.06) !important;
+    }
+  }
+}
+
+// Legacy .oe_button_box selector (used in some views)
+.oe_button_box .oe_stat_button {
+  border-right: 1px solid #dee2e6;
+
+  &:last-child { border-right: none; }
+
+  .o_stat_value {
+    color: #017e84 !important;
+    font-weight: 700;
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 8. Notebook Tabs — mauve active indicator
+// ════════════════════════════════════════════════════════════
+.o_notebook {
+  .nav-link {
+    color: #495057;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s ease, color 0.15s ease;
+
+    &.active {
+      color: #714b67;
+      border-bottom-color: #714b67;
+      font-weight: 600;
+    }
+
+    &:hover:not(.active) {
+      color: #714b67;
+      border-bottom-color: rgba(113, 75, 103, 0.30);
+    }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 9. Statusbar (workflow) — mauve active state
+// ════════════════════════════════════════════════════════════
+.o_statusbar_status {
+  .o_arrow_button.btn-primary,
+  .o_arrow_button.o_status_current {
+    background-color: #714b67 !important;
+    border-color: #714b67 !important;
+    color: #fff !important;
+
+    &:hover {
+      background-color: #5c3b53 !important;
+    }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 10. List View — Enterprise row highlight & column polish
+// ════════════════════════════════════════════════════════════
+.o_list_view {
+  // Row hover
+  .o_data_row:hover td {
+    background-color: rgba(113, 75, 103, 0.04) !important;
+  }
+
+  // Selected row
+  .o_data_row.o_row_selected td {
+    background-color: rgba(1, 126, 132, 0.08) !important;
+  }
+
+  // Sortable column header hover
+  .o_column_sortable:hover {
+    color: #714b67;
+  }
+
+  // Monetary / float: right-align
+  .o_field_monetary,
+  .o_field_float {
+    text-align: right;
+  }
+
+  // Muted rows (draft)
+  tr.o_data_row.text-muted {
+    opacity: 0.6;
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 11. Kanban View — polished card shadows
+// ════════════════════════════════════════════════════════════
+.o_kanban_view {
+  .o_kanban_record {
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07),
+                0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s ease, transform 0.10s ease;
+
+    &:hover {
+      box-shadow: 0 4px 14px rgba(113, 75, 103, 0.13),
+                  0 2px 6px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+    }
+  }
+
+  .o_kanban_group_header {
+    color: #714b67;
+    font-weight: 600;
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 12. Control Panel & Breadcrumb
+// ════════════════════════════════════════════════════════════
+.o_control_panel {
+  .breadcrumb-item.active {
+    color: #714b67;
+    font-weight: 600;
+  }
+
+  // Primary action buttons in control panel
+  .o_cp_buttons .btn-primary {
+    background-color: #714b67;
+    border-color: #714b67;
+
+    &:hover {
+      background-color: #5c3b53;
+      border-color: #4e3047;
+    }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 13. Search Panel — teal active items
+// ════════════════════════════════════════════════════════════
+.o_search_panel {
+  .o_search_panel_category_value.active > header,
+  .o_search_panel_filter_value.active > div {
+    color: #017e84;
+    font-weight: 600;
+  }
+
+  .o_search_panel_label_title:hover {
+    color: #714b67;
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 14. Badges — consistent sizing across all views
+// ════════════════════════════════════════════════════════════
+.badge {
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.35em 0.65em;
+  border-radius: 0.3rem;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 15. Progress Bar — teal fill colour
+// ════════════════════════════════════════════════════════════
+.o_field_progressbar {
+  .o_progress {
+    height: 20px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+
+    .o_progress_value {
+      border-radius: 4px;
+      background-color: #017e84;
+    }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 16. Fuel Station Dashboard KPI Cards
+//     (module-specific enhancements on top of the theme)
+// ════════════════════════════════════════════════════════════
+.o_form_view .card {
+  background-color: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.18s ease, transform 0.12s ease;
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(113, 75, 103, 0.12),
+                0 2px 6px rgba(0, 0, 0, 0.06) !important;
+    transform: translateY(-2px);
+  }
+
+  // KPI label row
+  .text-uppercase {
+    letter-spacing: 0.06em;
+    font-size: 0.72rem;
+    color: #6c757d;
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 17. Subtotal Footer
+// ════════════════════════════════════════════════════════════
+.oe_subtotal_footer td:last-child {
+  font-weight: 700;
+  color: #212529;
+}
+
+
+// ════════════════════════════════════════════════════════════
+// 18. Micro-interactions — buttons & clickable elements
+// ════════════════════════════════════════════════════════════
+.btn {
+  transition: background-color 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease,
+              transform 0.10s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.o_statusbar_status .o_arrow_button {
+  transition: background-color 0.15s ease;
+}

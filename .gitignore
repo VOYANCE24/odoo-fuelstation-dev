@@ -1,3 +1,6 @@
+# Odoo configuration (contains plaintext DB password)
+config/odoo.conf
+
 __pycache__/
 *.pyc
 *.pyo

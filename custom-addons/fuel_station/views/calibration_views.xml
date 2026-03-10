@@ -2,45 +2,55 @@
 <odoo>
     <data>
 
-        <!-- =========================
-             Calibration Profile: List
-             ========================= -->
         <record id="view_fuel_calibration_profile_list" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.list</field>
             <field name="model">fuel.calibration.profile</field>
             <field name="arch" type="xml">
                 <list string="Calibration Profiles">
                     <field name="name"/>
+                    <field name="profile_type" widget="badge"
+                           decoration-info="profile_type == 'truck'"
+                           decoration-success="profile_type == 'tank'"/>
                     <field name="product_id"/>
-                    <field name="active"/>
-                    <field name="write_date"/>
+                    <field name="reference" optional="show"/>
+                    <field name="active" optional="hide"/>
+                    <field name="write_date" optional="hide"/>
                 </list>
             </field>
         </record>
 
-        <!-- =========================
-             Calibration Profile: Form
-             ========================= -->
         <record id="view_fuel_calibration_profile_form" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.form</field>
             <field name="model">fuel.calibration.profile</field>
             <field name="arch" type="xml">
                 <form string="Calibration Profile">
                     <sheet>
+                        <div class="oe_title">
+                            <label for="name"/>
+                            <h1><field name="name" placeholder="e.g. PMS Tank 1"/></h1>
+                        </div>
                         <group>
-                            <field name="name"/>
-                            <field name="product_id"/>
-                            <field name="active"/>
+                            <group>
+                                <field name="profile_type"/>
+                                <field name="product_id"/>
+                            </group>
+                            <group>
+                                <field name="reference" placeholder="Optional label"/>
+                                <field name="active"/>
+                            </group>
                         </group>
-
                         <notebook>
-                            <page string="Calibration Lines">
+                            <page string="Calibration Points">
                                 <field name="line_ids">
                                     <list editable="bottom">
-                                        <field name="depth_mm"/>
-                                        <field name="volume_liters"/>
+                                        <field name="depth_mm" string="Depth (mm)"/>
+                                        <field name="volume_liters" string="Volume (L)"/>
                                     </list>
                                 </field>
+                                <p class="text-muted fst-italic mt-2">
+                                    Enter depth-to-volume pairs in ascending depth order.
+                                    Volume is linearly interpolated between points.
+                                </p>
                             </page>
                         </notebook>
                     </sheet>
@@ -48,9 +58,6 @@
             </field>
         </record>
 
-        <!-- =========================
-             Calibration Profile: Search
-             ========================= -->
         <record id="view_fuel_calibration_profile_search" model="ir.ui.view">
             <field name="name">fuel.calibration.profile.search</field>
             <field name="model">fuel.calibration.profile</field>
@@ -58,15 +65,22 @@
                 <search string="Search Calibration Profiles">
                     <field name="name"/>
                     <field name="product_id"/>
+                    <field name="reference"/>
+                    <filter string="Truck Compartments" name="truck"
+                            domain="[('profile_type','=','truck')]"/>
+                    <filter string="Station Tanks" name="tank"
+                            domain="[('profile_type','=','tank')]"/>
+                    <separator/>
                     <filter string="Active" name="active" domain="[('active','=',True)]"/>
                     <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
+                    <group>
+                        <filter string="Type" name="group_type" context="{'group_by': 'profile_type'}"/>
+                        <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+                    </group>
                 </search>
             </field>
         </record>
 
-        <!-- =========================
-             Action
-             ========================= -->
         <record id="action_fuel_calibration_profiles" model="ir.actions.act_window">
             <field name="name">Calibration Profiles</field>
             <field name="res_model">fuel.calibration.profile</field>
@@ -74,26 +88,11 @@
             <field name="search_view_id" ref="view_fuel_calibration_profile_search"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
-                    Create a calibration profile to map tank dip depth to volume.
+                    Create a calibration profile to map dip depth to volume.
                 </p>
+                <p>Create separate profiles for truck compartments and station tanks.</p>
             </field>
         </record>
-
-        <!-- =========================
-             Menus
-             ========================= -->
-        <menuitem id="menu_fuel_station_root" name="Fuel Station" sequence="10"/>
-
-        <menuitem id="menu_fuel_station_configuration"
-                  name="Configuration"
-                  parent="menu_fuel_station_root"
-                  sequence="20"/>
-
-        <menuitem id="menu_fuel_calibration_profiles"
-                  name="Calibration Profiles"
-                  parent="menu_fuel_station_configuration"
-                  action="action_fuel_calibration_profiles"
-                  sequence="10"/>
 
     </data>
 </odoo>
