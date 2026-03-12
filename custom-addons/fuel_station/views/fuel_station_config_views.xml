@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_station_config_form" model="ir.ui.view">
+      <field name="name">fuel.station.config.form</field>
+      <field name="model">fuel.station.config</field>
+      <field name="arch" type="xml">
+        <form string="Station Configuration">
+          <sheet>
+            <div class="oe_title">
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group string="Credit Payment Journals">
+              <field name="cash_journal_id"/>
+              <field name="cheque_journal_id"/>
+            </group>
+            <group string="Bank Reconciliation (Safe Deposit)">
+              <field name="safe_journal_id"/>
+              <field name="safe_account_id"/>
+              <field name="cash_clearing_account_id"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Server action opens (or creates) the singleton config record directly. -->
+    <record id="action_fuel_station_config_server" model="ir.actions.server">
+      <field name="name">Open Station Configuration</field>
+      <field name="model_id" ref="model_fuel_station_config"/>
+      <field name="state">code</field>
+      <field name="code">
+config = model.get_config()
+action = {
+    'type': 'ir.actions.act_window',
+    'name': 'Station Configuration',
+    'res_model': 'fuel.station.config',
+    'view_mode': 'form',
+    'res_id': config.id,
+    'target': 'current',
+}
+      </field>
+    </record>
+
+  </data>
+</odoo>

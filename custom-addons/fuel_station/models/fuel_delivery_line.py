@@ -7,3 +7,9 @@ class FuelDeliveryLine(models.Model):
     delivery_id = fields.Many2one("fuel.delivery", required=True, ondelete="cascade")
     product_id = fields.Many2one("product.product", required=True)
     received_litres = fields.Float(required=True)
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unit",
+        default=lambda self: self.env.ref("uom.product_uom_litre"),
+        readonly=True,
+    )

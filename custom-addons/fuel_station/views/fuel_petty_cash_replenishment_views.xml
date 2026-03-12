@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- List View -->
+    <record id="view_fuel_petty_cash_replenishment_tree" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.replenishment.tree</field>
+      <field name="model">fuel.petty.cash.replenishment</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="date"/>
+          <field name="source"/>
+          <field name="currency_id" column_invisible="1"/>
+          <field name="amount" widget="monetary"/>
+          <field name="received_by" optional="show"/>
+          <field name="note" optional="hide"/>
+        </list>
+      </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_fuel_petty_cash_replenishment_form" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.replenishment.form</field>
+      <field name="model">fuel.petty.cash.replenishment</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group string="Details">
+                <field name="date"/>
+                <field name="source" placeholder="e.g. From main safe, Bank withdrawal"/>
+                <field name="received_by"/>
+              </group>
+              <group string="Amount">
+                <field name="currency_id" invisible="1"/>
+                <field name="amount" widget="monetary"/>
+                <field name="note" placeholder="Optional note…"/>
+              </group>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_fuel_petty_cash_replenishment_search" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.replenishment.search</field>
+      <field name="model">fuel.petty.cash.replenishment</field>
+      <field name="arch" type="xml">
+        <search string="Search Petty Cash Deposits">
+          <field name="name"/>
+          <field name="source"/>
+          <field name="received_by"/>
+          <filter string="Today" name="today"
+                  domain="[('date','=', context_today().strftime('%Y-%m-%d'))]"/>
+          <filter string="This Month" name="this_month"
+                  domain="[('date','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+          <group>
+            <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_fuel_petty_cash_replenishments" model="ir.actions.act_window">
+      <field name="name">Petty Cash Deposits</field>
+      <field name="res_model">fuel.petty.cash.replenishment</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_petty_cash_replenishment_search"/>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">No petty cash deposits recorded yet.</p>
+        <p>Record when the petty cash float is topped up from the main safe or bank.</p>
+      </field>
+    </record>
+
+  </data>
+</odoo>

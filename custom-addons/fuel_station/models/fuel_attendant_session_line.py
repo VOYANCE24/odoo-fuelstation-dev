@@ -29,12 +29,24 @@ class FuelAttendantSessionLine(models.Model):
         readonly=True,
     )
 
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unit",
+        default=lambda self: self.env.ref("uom.product_uom_litre"),
+        readonly=True,
+    )
+
     previous_meter = fields.Float(readonly=True)
     current_meter = fields.Float(required=True)
 
     litres_sold = fields.Float(compute="_compute_litres", store=True)
     price = fields.Float(required=True)
     total = fields.Float(compute="_compute_total", store=True)
+
+    analytic_distribution = fields.Json(
+        string="Analytic Distribution",
+        default=lambda self: {},
+    )
 
     # ------------------------------------------------------------------
     # Helpers
@@ -81,6 +93,13 @@ class FuelAttendantSessionLine(models.Model):
                 line.previous_meter = 0.0
                 continue
             line.previous_meter = self._get_previous_meter_for_nozzle(line.nozzle_id.id)
+            product = line.nozzle_id.product_id
+            if product:
+                if hasattr(product.product_tmpl_id, 'analytic_distribution'):
+                    line.analytic_distribution = product.product_tmpl_id.analytic_distribution or {}
+                current_price = self.env["fuel.price"].get_current_price(product.id)
+                if current_price:
+                    line.price = current_price
 
     # ------------------------------------------------------------------
     # Compute

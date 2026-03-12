@@ -33,27 +33,27 @@ class FuelCalibrationProfile(models.Model):
         copy=True,
     )
 
-    def volume_from_depth_mm(self, depth_mm: float) -> float:
+    def volume_from_depth_cm(self, depth_cm: float) -> float:
         """Return volume (liters) using linear interpolation across calibration points."""
         self.ensure_one()
-        depth = float(depth_mm or 0.0)
+        depth = float(depth_cm or 0.0)
 
-        lines = self.line_ids.sorted(lambda l: l.depth_mm)
+        lines = self.line_ids.sorted(lambda l: l.depth_cm)
         if not lines:
             return 0.0
 
         # Clamp below min / above max
-        if depth <= lines[0].depth_mm:
+        if depth <= lines[0].depth_cm:
             return float(lines[0].volume_liters)
-        if depth >= lines[-1].depth_mm:
+        if depth >= lines[-1].depth_cm:
             return float(lines[-1].volume_liters)
 
         # Linear interpolation between the two bounding points
         prev_line = lines[0]
         for line in lines[1:]:
-            if depth <= line.depth_mm:
-                d1, v1 = prev_line.depth_mm, prev_line.volume_liters
-                d2, v2 = line.depth_mm, line.volume_liters
+            if depth <= line.depth_cm:
+                d1, v1 = prev_line.depth_cm, prev_line.volume_liters
+                d2, v2 = line.depth_cm, line.volume_liters
                 if d2 == d1:
                     return float(v2)
                 ratio = (depth - d1) / (d2 - d1)
@@ -66,26 +66,26 @@ class FuelCalibrationProfile(models.Model):
 class FuelCalibrationLine(models.Model):
     _name = "fuel.calibration.line"
     _description = "Fuel Calibration Point"
-    _order = "profile_id, depth_mm"
+    _order = "profile_id, depth_cm"
 
     profile_id = fields.Many2one("fuel.calibration.profile", required=True, ondelete="cascade")
-    depth_mm = fields.Float(required=True, help="Measured depth in mm.")
+    depth_cm = fields.Float(required=True, help="Measured depth in cm.")
     volume_liters = fields.Float(required=True, help="Volume in liters at this depth.")
 
-    @api.constrains("profile_id", "depth_mm", "volume_liters")
+    @api.constrains("profile_id", "depth_cm", "volume_liters")
     def _check_depth_volume(self):
         for rec in self:
             # Non-negative checks
-            if (rec.depth_mm or 0.0) < 0 or (rec.volume_liters or 0.0) < 0:
+            if (rec.depth_cm or 0.0) < 0 or (rec.volume_liters or 0.0) < 0:
                 raise ValidationError("Depth and volume must be non-negative.")
 
             # Uniqueness: depth must be unique per profile (Odoo 19-safe)
-            if rec.profile_id and rec.depth_mm is not False:
+            if rec.profile_id and rec.depth_cm is not False:
                 dup_count = self.search_count(
                     [
                         ("id", "!=", rec.id),
                         ("profile_id", "=", rec.profile_id.id),
-                        ("depth_mm", "=", rec.depth_mm),
+                        ("depth_cm", "=", rec.depth_cm),
                     ]
                 )
                 if dup_count:

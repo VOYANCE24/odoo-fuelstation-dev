@@ -59,9 +59,9 @@
                     <field name="compartment_code"/>
                     <field name="product_id"/>
                     <field name="calibration_profile_id"/>
-                    <field name="expected_depth_mm" optional="show"/>
-                    <field name="measured_depth_mm"/>
-                    <field name="depth_diff_mm" readonly="1" optional="show"/>
+                    <field name="expected_depth_cm" optional="show"/>
+                    <field name="measured_depth_cm"/>
+                    <field name="depth_diff_cm" readonly="1" optional="show"/>
                     <field name="expected_density" optional="hide"/>
                     <field name="measured_density" optional="hide"/>
                     <field name="density_diff" readonly="1" optional="hide"/>
@@ -76,8 +76,8 @@
                     <field name="tank_code"/>
                     <field name="product_id"/>
                     <field name="calibration_profile_id"/>
-                    <field name="depth_before_mm"/>
-                    <field name="depth_after_mm"/>
+                    <field name="depth_before_cm"/>
+                    <field name="depth_after_cm"/>
                     <field name="volume_before_liters" readonly="1"/>
                     <field name="volume_after_liters" readonly="1"/>
                     <field name="delta_volume_liters" readonly="1"/>
@@ -92,12 +92,23 @@
                   <list>
                     <field name="product_id"/>
                     <field name="received_litres"/>
+                    <field name="uom_id" readonly="1" options="{'no_open': true}" string="Unit"/>
                   </list>
                 </field>
               </page>
             </notebook>
+            <group string="Delivery Variance" invisible="not tankdip_line_ids">
+              <group>
+                <field name="compartment_total_liters" readonly="1"/>
+                <field name="tankdip_delta_liters" readonly="1"/>
+              </group>
+              <group>
+                <field name="delivery_variance_liters" readonly="1"
+                       decoration-danger="delivery_variance_liters != 0"/>
+              </group>
+            </group>
           </sheet>
-          <chatter/>
+
         </form>
       </field>
     </record>

@@ -43,12 +43,12 @@
                             <page string="Calibration Points">
                                 <field name="line_ids">
                                     <list editable="bottom">
-                                        <field name="depth_mm" string="Depth (mm)"/>
+                                        <field name="depth_cm" string="Depth (cm)"/>
                                         <field name="volume_liters" string="Volume (L)"/>
                                     </list>
                                 </field>
                                 <p class="text-muted fst-italic mt-2">
-                                    Enter depth-to-volume pairs in ascending depth order.
+                                    Enter depth-to-volume pairs in ascending depth order (depth in cm).
                                     Volume is linearly interpolated between points.
                                 </p>
                             </page>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_customer_statement_wizard_form" model="ir.ui.view">
+      <field name="name">fuel.customer.statement.wizard.form</field>
+      <field name="model">fuel.customer.statement.wizard</field>
+      <field name="arch" type="xml">
+        <form string="Customer Credit Statement">
+          <sheet>
+            <group string="Statement Parameters">
+              <group>
+                <field name="partner_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+              </group>
+              <group>
+                <field name="currency_id" invisible="1"/>
+                <field name="opening_balance" widget="monetary"
+                       invisible="not line_ids"/>
+                <field name="total_invoiced" widget="monetary"
+                       invisible="not line_ids"/>
+                <field name="total_paid" widget="monetary"
+                       invisible="not line_ids"/>
+                <field name="closing_balance" widget="monetary"
+                       invisible="not line_ids"/>
+              </group>
+            </group>
+            <div class="text-center mb-3">
+              <button name="action_generate" type="object"
+                      string="Generate Statement" class="btn-primary"/>
+            </div>
+            <field name="line_ids" invisible="not line_ids">
+              <list string="Statement" create="false" delete="false">
+                <field name="date"/>
+                <field name="reference"/>
+                <field name="description"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="debit" widget="monetary"/>
+                <field name="credit" widget="monetary"/>
+                <field name="balance" widget="monetary"/>
+              </list>
+            </field>
+          </sheet>
+          <footer>
+            <button string="Close" class="btn-secondary" special="cancel"/>
+          </footer>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_customer_statement_wizard" model="ir.actions.act_window">
+      <field name="name">Customer Statement</field>
+      <field name="res_model">fuel.customer.statement.wizard</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+  </data>
+</odoo>
