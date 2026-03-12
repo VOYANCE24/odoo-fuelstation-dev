@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_price_tree" model="ir.ui.view">
+      <field name="name">fuel.price.tree</field>
+      <field name="model">fuel.price</field>
+      <field name="arch" type="xml">
+        <list string="Fuel Prices">
+          <field name="product_id"/>
+          <field name="effective_date"/>
+          <field name="price"/>
+          <field name="note" optional="show"/>
+        </list>
+      </field>
+    </record>
+
+    <record id="view_fuel_price_form" model="ir.ui.view">
+      <field name="name">fuel.price.form</field>
+      <field name="model">fuel.price</field>
+      <field name="arch" type="xml">
+        <form string="Fuel Price">
+          <sheet>
+            <group>
+              <group string="Product">
+                <field name="product_id"/>
+                <field name="effective_date"/>
+              </group>
+              <group string="Price">
+                <field name="price"/>
+                <field name="note" placeholder="Optional note…"/>
+              </group>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_fuel_price_search" model="ir.ui.view">
+      <field name="name">fuel.price.search</field>
+      <field name="model">fuel.price</field>
+      <field name="arch" type="xml">
+        <search string="Search Fuel Prices">
+          <field name="product_id"/>
+          <field name="effective_date"/>
+          <group>
+            <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="action_fuel_price" model="ir.actions.act_window">
+      <field name="name">Fuel Prices</field>
+      <field name="res_model">fuel.price</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_price_search"/>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">No fuel prices configured yet.</p>
+        <p>Add a price entry for each product. Session and credit sale lines will
+           auto-populate the price when a nozzle is selected.</p>
+      </field>
+    </record>
+
+  </data>
+</odoo>

@@ -44,5 +44,34 @@
       <field name="padding">5</field>
     </record>
 
+
+    <record id="seq_fuel_petty_cash_expense" model="ir.sequence">
+      <field name="name">Cash Expense</field>
+      <field name="code">fuel.petty.cash.expense</field>
+      <field name="prefix">PCE/%(year)s/</field>
+      <field name="padding">5</field>
+    </record>
+
+    <record id="seq_fuel_petty_cash_expense_bill" model="ir.sequence">
+      <field name="name">Cash Expense Bill No.</field>
+      <field name="code">fuel.petty.cash.expense.bill</field>
+      <field name="prefix">BN/%(year)s/</field>
+      <field name="padding">5</field>
+    </record>
+
+    <record id="seq_fuel_petty_cash_replenishment" model="ir.sequence">
+      <field name="name">Petty Cash Deposit</field>
+      <field name="code">fuel.petty.cash.replenishment</field>
+      <field name="prefix">PCR/%(year)s/</field>
+      <field name="padding">5</field>
+    </record>
+
+    <record id="seq_fuel_payout" model="ir.sequence">
+      <field name="name">Payout</field>
+      <field name="code">fuel.payout</field>
+      <field name="prefix">PO/%(year)s/</field>
+      <field name="padding">5</field>
+    </record>
+
   </data>
 </odoo>

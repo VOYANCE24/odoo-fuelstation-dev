@@ -6,9 +6,23 @@
     <menuitem id="fuel_station_root_menu" name="Fuel Station" sequence="10"/>
 
     <!-- Top-level sections -->
-    <menuitem id="fuel_station_ops_menu"    name="Operations"  parent="fuel_station_root_menu" sequence="10"/>
-    <menuitem id="fuel_station_master_menu" name="Master Data" parent="fuel_station_root_menu" sequence="20"/>
-    <menuitem id="menu_fuel_station_config" name="Configuration" parent="fuel_station_root_menu" sequence="30"/>
+    <menuitem id="fuel_station_expenses_menu" name="Expenses"     parent="fuel_station_root_menu" sequence="5"/>
+    <menuitem id="fuel_station_ops_menu"      name="Operations"   parent="fuel_station_root_menu" sequence="10"/>
+    <menuitem id="fuel_station_master_menu"   name="Master Data"  parent="fuel_station_root_menu" sequence="20"/>
+    <menuitem id="menu_fuel_station_config"   name="Configuration" parent="fuel_station_root_menu" sequence="30"/>
+
+  <!-- ── Expenses ──────────────────────────────────────── -->
+  <menuitem id="menu_fuel_cash_expenses"
+            name="Cash Expenses"
+            parent="fuel_station_expenses_menu"
+            action="action_fuel_petty_cash_expenses"
+            sequence="10"/>
+
+  <menuitem id="menu_fuel_petty_cash_deposits"
+            name="Petty Cash Deposits"
+            parent="fuel_station_expenses_menu"
+            action="action_fuel_petty_cash_replenishments"
+            sequence="20"/>
 
     <!-- ── Dashboard ─────────────────────────────────────── -->
     <menuitem
@@ -23,13 +37,24 @@
     <menuitem id="menu_credit_sales"       name="Credit Sales"       parent="fuel_station_ops_menu" action="action_fuel_credit_sales"         sequence="20"/>
     <menuitem id="menu_cash_deposits"      name="Cash Deposits"      parent="fuel_station_ops_menu" action="action_fuel_cash_deposits"        sequence="30"/>
     <menuitem id="menu_credit_payments"    name="Credit Payments"    parent="fuel_station_ops_menu" action="action_fuel_credit_payments"      sequence="40"/>
-    <menuitem id="menu_attendant_sessions" name="Attendant Sessions" parent="fuel_station_ops_menu" action="action_fuel_attendant_sessions"   sequence="50"/>
+    <menuitem id="menu_fuel_payouts"       name="Payouts"            parent="fuel_station_ops_menu" action="action_fuel_payouts"             sequence="45"/>
+    <menuitem id="menu_attendant_sessions" name="Attendant Session Close" parent="fuel_station_ops_menu" action="action_fuel_attendant_sessions"   sequence="50"/>
     <menuitem id="menu_station_shift_close" name="Station Shift Close" parent="fuel_station_ops_menu" action="action_fuel_station_shift_closes" sequence="60"/>
 
     <!-- ── Master Data ───────────────────────────────────── -->
     <menuitem id="menu_shifts"     name="Shifts"          parent="fuel_station_master_menu" action="action_fuel_shifts"     sequence="10"/>
     <menuitem id="menu_pumps"      name="Pumps"           parent="fuel_station_master_menu" action="action_fuel_pumps"      sequence="20"/>
+    <menuitem id="menu_nozzles"    name="Nozzles"         parent="fuel_station_master_menu" action="action_fuel_nozzles"    sequence="25"/>
     <menuitem id="menu_attendants" name="Pump Attendants" parent="fuel_station_master_menu" action="action_fuel_attendants" sequence="30"/>
+
+    <!-- ── Operations (continued) ──────────────────────────── -->
+    <menuitem
+        id="menu_fuel_customer_statement"
+        name="Customer Statement"
+        parent="fuel_station_ops_menu"
+        action="action_fuel_customer_statement_wizard"
+        sequence="70"
+        groups="fuel_station.group_fuel_manager"/>
 
     <!-- ── Configuration ─────────────────────────────────── -->
     <menuitem
@@ -38,6 +63,26 @@
         parent="menu_fuel_station_config"
         action="action_fuel_calibration_profiles"
         sequence="10"/>
+    <menuitem
+        id="menu_fuel_prices"
+        name="Fuel Prices"
+        parent="menu_fuel_station_config"
+        action="action_fuel_price"
+        sequence="15"
+        groups="fuel_station.group_fuel_manager"/>
+    <menuitem
+        id="menu_fuel_expense_categories"
+        name="Expense Categories"
+        parent="menu_fuel_station_config"
+        action="action_fuel_petty_cash_categories"
+        sequence="20"/>
+    <menuitem
+        id="menu_fuel_station_settings"
+        name="Station Settings"
+        parent="menu_fuel_station_config"
+        action="action_fuel_station_config_server"
+        sequence="30"
+        groups="fuel_station.group_fuel_manager"/>
 
   </data>
 </odoo>

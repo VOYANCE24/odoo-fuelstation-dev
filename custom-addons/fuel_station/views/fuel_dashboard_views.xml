@@ -38,6 +38,7 @@
             <field name="unpaid_credit_count" invisible="1"/>
             <field name="pending_delivery_count" invisible="1"/>
             <field name="total_safe_difference" invisible="1"/>
+            <field name="petty_cash_balance" invisible="1"/>
 
             <!-- ════════════════════════════════════════════════
                  ALERT BAR — shown when any pending items exist
@@ -276,9 +277,109 @@
             </div><!-- /row 2 -->
 
             <!-- ════════════════════════════════════════════════
-                 SECTION 3 — Top Attendants leaderboard
+                 SECTION 3 — Cash Management
                  ════════════════════════════════════════════════ -->
-            <separator string="Top Attendants — Period"/>
+            <separator string="Cash Management"/>
+
+            <div class="row g-3 mb-3">
+
+              <!-- Petty Cash Balance (running all-time balance) -->
+              <div class="col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-briefcase fa-lg me-2 text-info"
+                       invisible="petty_cash_balance &lt; 0"
+                       title="Petty Cash Balance"/>
+                    <i class="fa fa-briefcase fa-lg me-2 text-danger"
+                       invisible="petty_cash_balance &gt;= 0"
+                       title="Petty Cash Balance"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Petty Cash Account</div>
+                  </div>
+                  <div class="fw-bold fs-3 text-info"
+                       invisible="petty_cash_balance &lt; 0">
+                    <field name="petty_cash_balance" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="fw-bold fs-3 text-danger"
+                       invisible="petty_cash_balance &gt;= 0">
+                    <field name="petty_cash_balance" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="text-muted small mt-1">Account Balance</div>
+                  <button name="action_open_petty_cash_deposits" type="object"
+                          string="View deposits →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start text-info"/>
+                </div>
+              </div>
+
+              <!-- Period Cash Expenses -->
+              <div class="col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-shopping-cart fa-lg text-warning me-2" title="Period Expenses"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Cash Expenses (Period)</div>
+                  </div>
+                  <div class="fw-bold fs-3 text-warning">
+                    <field name="total_period_expenses" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="text-muted small mt-1">Posted expenses in selected period</div>
+                  <button name="action_open_period_expenses" type="object"
+                          string="View expenses →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start text-warning"/>
+                </div>
+              </div>
+
+            </div><!-- /row 3 -->
+
+            <!-- ════════════════════════════════════════════════
+                 SECTION 3.5 — Credit Collections
+                 ════════════════════════════════════════════════ -->
+            <separator string="Credit Collections"/>
+
+            <div class="row g-3 mb-3">
+
+              <!-- Cash Credit Payments -->
+              <div class="col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-money fa-lg text-success me-2" title="Cash Credit Payments"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Cash Credit Payments</div>
+                  </div>
+                  <div class="fw-bold fs-3 text-success">
+                    <field name="total_cash_credit_received" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="text-muted small mt-1">Cash received from credit customers</div>
+                  <button name="action_open_cash_credit_payments" type="object"
+                          string="View details →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start text-success"/>
+                </div>
+              </div>
+
+              <!-- Cheque Credit Payments -->
+              <div class="col-lg-6 col-md-6">
+                <div class="card h-100 border-0 shadow-sm p-3">
+                  <div class="d-flex align-items-center mb-2">
+                    <i class="fa fa-university fa-lg text-info me-2" title="Cheque Credit Payments"/>
+                    <div class="text-muted small text-uppercase fw-semibold"
+                         style="letter-spacing:.5px;">Cheques Received</div>
+                  </div>
+                  <div class="fw-bold fs-3 text-info">
+                    <field name="total_cheque_credit_received" nolabel="1" widget="monetary"/>
+                  </div>
+                  <div class="text-muted small mt-1">Cheques received from credit customers</div>
+                  <button name="action_open_cheque_credit_payments" type="object"
+                          string="View details →"
+                          class="btn btn-sm btn-link p-0 mt-1 text-start text-info"/>
+                </div>
+              </div>
+
+            </div><!-- /credit collections row -->
+
+            <!-- ════════════════════════════════════════════════
+                 SECTION 4 — Top Attendants leaderboard
+                 ════════════════════════════════════════════════ -->
+            <separator string="Top Attendants — Period" />
 
             <field name="attendant_rank_ids" nolabel="1" readonly="1"
                    options="{'no_create': true, 'no_delete': true}">

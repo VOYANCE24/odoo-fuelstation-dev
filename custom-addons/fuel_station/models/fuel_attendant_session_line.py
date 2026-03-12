@@ -15,8 +15,26 @@ class FuelAttendantSessionLine(models.Model):
     date = fields.Date(related="session_id.date", store=True, readonly=True, index=True)
     shift_id = fields.Many2one(related="session_id.shift_id", store=True, readonly=True)
 
-    pump_id = fields.Many2one("fuel.pump", required=True)
-    product_id = fields.Many2one(related="pump_id.product_id", store=True, readonly=True)
+    nozzle_id = fields.Many2one("fuel.nozzle", string="Nozzle", required=True)
+    pump_id = fields.Many2one(
+        "fuel.pump",
+        related="nozzle_id.pump_id",
+        store=True,
+        readonly=True,
+        string="Pump",
+    )
+    product_id = fields.Many2one(
+        related="nozzle_id.product_id",
+        store=True,
+        readonly=True,
+    )
+
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unit",
+        default=lambda self: self.env.ref("uom.product_uom_litre"),
+        readonly=True,
+    )
 
     previous_meter = fields.Float(readonly=True)
     current_meter = fields.Float(required=True)
@@ -25,26 +43,25 @@ class FuelAttendantSessionLine(models.Model):
     price = fields.Float(required=True)
     total = fields.Float(compute="_compute_total", store=True)
 
+    analytic_distribution = fields.Json(
+        string="Analytic Distribution",
+        default=lambda self: {},
+    )
+
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
 
-    def _get_previous_meter_for_pump(self, pump_id: int) -> float:
+    def _get_previous_meter_for_nozzle(self, nozzle_id: int) -> float:
         """
         Return the current_meter of the most-recently approved session line
-        for the given pump.
+        for the given nozzle.
 
-        Fix applied vs original:
-            The original code ordered by "session_id.date desc, id desc" — ordering
-            by a Many2one-related path in search() is unreliable in Odoo's ORM (it
-            may or may not emit the required SQL JOIN depending on the version).
-
-            "date" is a *stored* related field on this model, so we can order by it
-            directly and safely.
+        Uses the stored 'date' related field for safe ordering.
         """
         last = self.search(
             [
-                ("pump_id", "=", pump_id),
+                ("nozzle_id", "=", nozzle_id),
                 ("session_id.state", "=", "approved"),
             ],
             order="date desc, id desc",
@@ -58,21 +75,10 @@ class FuelAttendantSessionLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """
-        Fix applied vs original:
-            The original code relied solely on @api.onchange to populate
-            previous_meter.  onchange only fires in the browser UI — records
-            created via the ORM (imports, API calls, tests) would always get
-            previous_meter = 0.0, producing incorrect litres_sold.
-
-            We now look up the previous meter in create() so that ALL code
-            paths get the correct value.  The onchange below is retained for
-            immediate UI feedback.
-        """
         for vals in vals_list:
-            if vals.get("pump_id") and not vals.get("previous_meter"):
-                vals["previous_meter"] = self._get_previous_meter_for_pump(
-                    vals["pump_id"]
+            if vals.get("nozzle_id") and not vals.get("previous_meter"):
+                vals["previous_meter"] = self._get_previous_meter_for_nozzle(
+                    vals["nozzle_id"]
                 )
         return super().create(vals_list)
 
@@ -80,13 +86,20 @@ class FuelAttendantSessionLine(models.Model):
     # Onchange (UI feedback only — authoritative logic lives in create())
     # ------------------------------------------------------------------
 
-    @api.onchange("pump_id")
-    def _onchange_pump_id_set_previous(self):
+    @api.onchange("nozzle_id")
+    def _onchange_nozzle_id_set_previous(self):
         for line in self:
-            if not line.pump_id:
+            if not line.nozzle_id:
                 line.previous_meter = 0.0
                 continue
-            line.previous_meter = self._get_previous_meter_for_pump(line.pump_id.id)
+            line.previous_meter = self._get_previous_meter_for_nozzle(line.nozzle_id.id)
+            product = line.nozzle_id.product_id
+            if product:
+                if hasattr(product.product_tmpl_id, 'analytic_distribution'):
+                    line.analytic_distribution = product.product_tmpl_id.analytic_distribution or {}
+                current_price = self.env["fuel.price"].get_current_price(product.id)
+                if current_price:
+                    line.price = current_price
 
     # ------------------------------------------------------------------
     # Compute
@@ -114,5 +127,5 @@ class FuelAttendantSessionLine(models.Model):
             if line.current_meter < line.previous_meter:
                 raise ValidationError(
                     f"Current meter ({line.current_meter}) must be >= "
-                    f"previous meter ({line.previous_meter}) on pump {line.pump_id.name}."
+                    f"previous meter ({line.previous_meter}) on {line.nozzle_id.name}."
                 )

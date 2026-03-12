@@ -6,7 +6,7 @@ class FuelStationShiftClose(models.Model):
     _name = "fuel.station.shift.close"
     _description = "Station Shift Close"
     _order = "date desc, id desc"
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+
 
     _unique_date_shift = models.Constraint(
         "UNIQUE(date, shift_id)",
@@ -39,6 +39,17 @@ class FuelStationShiftClose(models.Model):
 
     credit_payment_ids = fields.One2many(
         "fuel.credit.payment", "station_close_id", string="Credit Payments"
+    )
+
+    expense_ids = fields.One2many(
+        "fuel.petty.cash.expense",
+        "station_close_id",
+        string="Cash Expenses",
+    )
+    total_expenses = fields.Float(
+        compute="_compute_cash",
+        store=True,
+        string="Total Cash Expenses",
     )
 
     # ------------------------------------------------------------------ #
@@ -74,12 +85,18 @@ class FuelStationShiftClose(models.Model):
         help="Sum of credit payments received by cheque during this shift.",
     )
 
+    payout_total = fields.Float(
+        compute="_compute_cash",
+        store=True,
+        string="Total Payouts",
+        help="Sum of all payouts paid out by attendants across sessions in this shift close.",
+    )
     cash_expected = fields.Float(
         compute="_compute_cash",
         store=True,
         string="Expected Cash",
         help=(
-            "= Pump Sales − Credit Sales + Cash Credit Payments received.\n"
+            "= Pump Sales − Credit Sales + Cash Credit Payments − Payouts.\n"
             "This is the cash the cashier should physically hold."
         ),
     )
@@ -91,6 +108,17 @@ class FuelStationShiftClose(models.Model):
         store=True,
         string="Safe Difference",
         help="= Cash Deposited in Safe − Expected Cash. Negative = shortage.",
+    )
+
+    note = fields.Text(string="Notes")
+
+    # Journal entry created on approval for safe deposit reconciliation.
+    move_id = fields.Many2one(
+        "account.move",
+        string="Safe Deposit Entry",
+        readonly=True,
+        copy=False,
+        ondelete="set null",
     )
 
     approver_id = fields.Many2one("res.users", readonly=True)
@@ -128,9 +156,12 @@ class FuelStationShiftClose(models.Model):
     @api.depends(
         "attendant_session_ids.total_sales",
         "attendant_session_ids.total_credit_sales",
+        "attendant_session_ids.total_payouts",
         "credit_payment_ids.amount_paid",
         "credit_payment_ids.payment_method",
         "cash_deposited_in_safe",
+        "expense_ids.amount",
+        "expense_ids.state",
     )
     def _compute_cash(self):
         """
@@ -169,13 +200,20 @@ class FuelStationShiftClose(models.Model):
             close.cash_credit_payments = sum(cash_payments.mapped("amount_paid"))
             close.cheque_credit_payments = sum(cheque_payments.mapped("amount_paid"))
 
+            close.payout_total = sum(
+                close.attendant_session_ids.mapped("total_payouts")
+            )
             close.cash_expected = (
                 close.pump_sales_total
                 - close.pump_credit_total
                 + close.cash_credit_payments
+                - close.payout_total
             )
             close.safe_difference = (
                 (close.cash_deposited_in_safe or 0.0) - close.cash_expected
+            )
+            close.total_expenses = sum(
+                close.expense_ids.filtered(lambda e: e.state == "posted").mapped("amount")
             )
 
     @api.depends_context('company')
@@ -229,8 +267,8 @@ class FuelStationShiftClose(models.Model):
         Existing lines are not duplicated.
         """
         for close in self:
-            # Collect products from pumps and session sales lines.
-            products = self.env["fuel.pump"].search([]).mapped("product_id")
+            # Collect products from active nozzles and session sales lines.
+            products = self.env["fuel.nozzle"].search([("active", "=", True)]).mapped("product_id")
             products |= close.attendant_session_ids.mapped("line_ids.product_id")
             products = products.filtered(lambda p: p.id)
 
@@ -268,10 +306,20 @@ class FuelStationShiftClose(models.Model):
             )
             payments.write({"station_close_id": close.id})
 
+    def action_pull_expenses(self):
+        """Attach unlinked posted cash expenses for this date to this close."""
+        for close in self:
+            expenses = self.env["fuel.petty.cash.expense"].search([
+                ("station_close_id", "=", False),
+                ("state", "=", "posted"),
+                ("date", "=", close.date),
+            ])
+            expenses.write({"station_close_id": close.id})
+
     def action_prepare_shift_close(self):
         """
         Single-button convenience action: runs Pull Sessions → Prepare Balancing
-        Lines → Pull Credit Payments in one transaction.
+        Lines → Pull Credit Payments → Pull Expenses in one transaction.
 
         Replaces the three separate manual buttons so operators cannot accidentally
         skip a step or run them out of order.
@@ -279,6 +327,7 @@ class FuelStationShiftClose(models.Model):
         self.action_pull_sessions()
         self.action_prepare_balancing()
         self.action_pull_credit_payments()
+        self.action_pull_expenses()
 
     def action_approve(self):
         for close in self:
@@ -301,6 +350,7 @@ class FuelStationShiftClose(models.Model):
                     "approved_at": fields.Datetime.now(),
                 }
             )
+            close._post_safe_deposit_entries()
 
     def action_open_sessions(self):
         self.ensure_one()
@@ -322,3 +372,66 @@ class FuelStationShiftClose(models.Model):
             'domain': [('station_close_id', '=', self.id)],
             'context': {'default_station_close_id': self.id},
         }
+
+    def action_view_safe_deposit_entry(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Safe Deposit Entry',
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': self.move_id.id,
+        }
+
+    # ------------------------------------------------------------------
+    # Bank reconciliation
+    # ------------------------------------------------------------------
+
+    def _post_safe_deposit_entries(self):
+        """
+        Create and post a journal entry recording cash deposited in the safe.
+
+            Dr. Safe / Vault Account
+            Cr. Cash Clearing Account
+            Amount = cash_deposited_in_safe
+
+        Skipped silently if:
+          - safe_journal_id, safe_account_id, or cash_clearing_account_id
+            are not configured in Station Settings.
+          - cash_deposited_in_safe is zero.
+          - A move_id already exists (idempotent).
+        """
+        self.ensure_one()
+        if self.move_id:
+            return
+
+        amount = self.cash_deposited_in_safe
+        if not amount:
+            return
+
+        config = self.env["fuel.station.config"].get_config()
+        if not (config.safe_journal_id and config.safe_account_id and config.cash_clearing_account_id):
+            return
+
+        move = self.env["account.move"].create({
+            "move_type": "entry",
+            "journal_id": config.safe_journal_id.id,
+            "date": self.date,
+            "ref": "Safe deposit — %s" % self.name,
+            "line_ids": [
+                (0, 0, {
+                    "account_id": config.safe_account_id.id,
+                    "name": "Cash deposited in safe — %s" % self.name,
+                    "debit": amount,
+                    "credit": 0.0,
+                }),
+                (0, 0, {
+                    "account_id": config.cash_clearing_account_id.id,
+                    "name": "Cash clearing — %s" % self.name,
+                    "debit": 0.0,
+                    "credit": amount,
+                }),
+            ],
+        })
+        move.action_post()
+        self.move_id = move

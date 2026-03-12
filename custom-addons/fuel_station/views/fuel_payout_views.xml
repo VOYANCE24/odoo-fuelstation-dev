@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- List View -->
+    <record id="view_fuel_payout_tree" model="ir.ui.view">
+      <field name="name">fuel.payout.tree</field>
+      <field name="model">fuel.payout</field>
+      <field name="arch" type="xml">
+        <list decoration-muted="state == 'draft'"
+              decoration-success="state == 'expensed'">
+          <field name="name"/>
+          <field name="date"/>
+          <field name="shift_id"/>
+          <field name="attendant_id"/>
+          <field name="paid_to" optional="show"/>
+          <field name="session_id" optional="show"/>
+          <field name="currency_id" column_invisible="1"/>
+          <field name="amount" widget="monetary"/>
+          <field name="state" widget="badge"
+                 decoration-success="state == 'expensed'"
+                 decoration-muted="state == 'draft'"/>
+        </list>
+      </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_fuel_payout_form" model="ir.ui.view">
+      <field name="name">fuel.payout.form</field>
+      <field name="model">fuel.payout</field>
+      <field name="arch" type="xml">
+        <form>
+          <header>
+            <field name="state" widget="statusbar" statusbar_visible="draft,expensed"/>
+          </header>
+          <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_expense" type="object"
+                      class="oe_stat_button" icon="fa-file-text-o"
+                      invisible="not expense_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text">Cash Expense</span>
+                </div>
+              </button>
+            </div>
+            <field name="expense_id" invisible="1"/>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group string="Details">
+                <field name="date" readonly="state == 'expensed'"/>
+                <field name="shift_id" readonly="state == 'expensed'"/>
+                <field name="attendant_id" readonly="state == 'expensed'"/>
+                <field name="paid_to" readonly="state == 'expensed'"/>
+              </group>
+              <group string="Summary">
+                <field name="currency_id" invisible="1"/>
+                <field name="session_id" readonly="1" invisible="not session_id"/>
+                <field name="amount" widget="monetary" readonly="1"/>
+              </group>
+            </group>
+            <field name="line_ids" readonly="state == 'expensed'">
+              <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="category_id"/>
+                <field name="description"/>
+                <field name="qty"/>
+                <field name="rate"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="amount" widget="monetary" readonly="1"/>
+              </list>
+            </field>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_fuel_payout_search" model="ir.ui.view">
+      <field name="name">fuel.payout.search</field>
+      <field name="model">fuel.payout</field>
+      <field name="arch" type="xml">
+        <search string="Search Payouts">
+          <field name="name"/>
+          <field name="paid_to"/>
+          <field name="attendant_id"/>
+          <field name="shift_id"/>
+          <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+          <filter string="Expensed" name="expensed" domain="[('state','=','expensed')]"/>
+          <filter string="Unlinked" name="unlinked" domain="[('session_id','=',False)]"/>
+          <separator/>
+          <filter string="Today" name="today"
+                  domain="[('date','&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),('date','&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]"/>
+          <filter string="This Month" name="this_month"
+                  domain="[('date','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+          <group>
+            <filter string="Attendant" name="group_attendant" context="{'group_by': 'attendant_id'}"/>
+            <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
+            <filter string="Paid To" name="group_paid_to" context="{'group_by': 'paid_to'}"/>
+            <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
+            <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_fuel_payouts" model="ir.actions.act_window">
+      <field name="name">Payouts</field>
+      <field name="res_model">fuel.payout</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_payout_search"/>
+      <field name="context">{"search_default_draft": 1}</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">No payouts recorded yet.</p>
+        <p>Record a payout made during a shift.</p>
+      </field>
+    </record>
+
+  </data>
+</odoo>

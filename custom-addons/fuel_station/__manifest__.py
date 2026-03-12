@@ -10,7 +10,7 @@
     'category': 'Fuel Station',
     'version': '0.5',
 
-    'depends': ['base', 'mail', 'product', 'purchase', 'stock', 'hr'],
+    'depends': ['base', 'mail', 'product', 'purchase', 'stock', 'hr', 'uom', 'account'],
 
     'assets': {
         'web.assets_backend': [
@@ -31,6 +31,7 @@
 
         'views/fuel_shift_views.xml',
         'views/fuel_pump_views.xml',
+        'views/fuel_nozzle_views.xml',
         'views/fuel_attendant_views.xml',
         'views/fuel_credit_sale_views.xml',
         'views/fuel_cash_deposit_views.xml',
@@ -41,6 +42,16 @@
         # Dashboard (must come after all model views so server action
         # can reference them; also after product views so the inherit works)
         'views/fuel_dashboard_views.xml',
+
+        'views/fuel_price_views.xml',
+        'views/fuel_customer_statement_wizard_views.xml',
+
+        'views/fuel_petty_cash_category_views.xml',
+        'views/fuel_petty_cash_expense_views.xml',
+        'views/fuel_petty_cash_replenishment_views.xml',
+        'views/fuel_payout_views.xml',
+        'views/fuel_station_config_views.xml',
+        'views/res_partner_fuel_views.xml',
 
         'views/menu.xml',
     ],

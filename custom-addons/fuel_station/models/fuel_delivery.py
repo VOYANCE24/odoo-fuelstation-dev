@@ -6,7 +6,7 @@ class FuelDelivery(models.Model):
     _name = "fuel.delivery"
     _description = "Fuel Delivery Measurements"
     _order = "id desc"
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+
 
     name = fields.Char(
         string="Delivery Ref",
@@ -63,6 +63,29 @@ class FuelDelivery(models.Model):
         string="Fuel Deliveries",
     )
 
+    compartment_total_liters = fields.Float(
+        string="Compartment Total (L)",
+        compute="_compute_delivery_variance",
+        store=False,
+        help="Sum of measured volumes across all compartment lines.",
+    )
+    tankdip_delta_liters = fields.Float(
+        string="Tank Dip Delta (L)",
+        compute="_compute_delivery_variance",
+        store=False,
+        help="Sum of volume deltas (after − before) across all tank dip lines.",
+    )
+    delivery_variance_liters = fields.Float(
+        string="Delivery Variance (L)",
+        compute="_compute_delivery_variance",
+        store=False,
+        help=(
+            "= Compartment Total − Tank Dip Delta. "
+            "Zero means the tank received exactly what the truck brought. "
+            "Positive = overage in truck measurement; Negative = under-delivery."
+        ),
+    )
+
     notes = fields.Text()
 
     # ------------------------------------------------------------------
@@ -80,6 +103,22 @@ class FuelDelivery(models.Model):
         count_by_picking = {g["picking_id"][0]: g["picking_id_count"] for g in groups}
         for rec in self:
             rec.fuel_delivery_count = count_by_picking.get(rec.picking_id.id, 0)
+
+    @api.depends(
+        "compartment_line_ids.measured_volume_liters",
+        "tankdip_line_ids.delta_volume_liters",
+    )
+    def _compute_delivery_variance(self):
+        for rec in self:
+            compartment_total = sum(
+                rec.compartment_line_ids.mapped("measured_volume_liters")
+            )
+            tankdip_delta = sum(
+                rec.tankdip_line_ids.mapped("delta_volume_liters")
+            )
+            rec.compartment_total_liters = compartment_total
+            rec.tankdip_delta_liters = tankdip_delta
+            rec.delivery_variance_liters = compartment_total - tankdip_delta
 
     # ------------------------------------------------------------------
     # State transitions
@@ -194,10 +233,10 @@ class FuelDeliveryCompartment(models.Model):
         store=False,
     )
 
-    expected_depth_mm = fields.Float(string="Expected Depth (mm)")
-    measured_depth_mm = fields.Float(string="Measured Depth (mm)")
-    depth_diff_mm = fields.Float(
-        string="Depth Diff (mm)", compute="_compute_diffs", store=False
+    expected_depth_cm = fields.Float(string="Expected Depth (cm)")
+    measured_depth_cm = fields.Float(string="Measured Depth (cm)")
+    depth_diff_cm = fields.Float(
+        string="Depth Diff (cm)", compute="_compute_diffs", store=False
     )
 
     expected_density = fields.Float(string="Expected Density")
@@ -217,7 +256,7 @@ class FuelDeliveryCompartment(models.Model):
     measured_volume_liters = fields.Float(
         string="Measured Volume (L)",
         compute="_compute_measured_volume",
-        store=False,
+        store=True,
     )
 
     @api.depends("delivery_id.picking_id")
@@ -231,18 +270,18 @@ class FuelDeliveryCompartment(models.Model):
             )
             rec.picking_product_ids = [(6, 0, products.ids)]
 
-    @api.depends("expected_depth_mm", "measured_depth_mm", "expected_density", "measured_density")
+    @api.depends("expected_depth_cm", "measured_depth_cm", "expected_density", "measured_density")
     def _compute_diffs(self):
         for rec in self:
-            rec.depth_diff_mm = (rec.measured_depth_mm or 0.0) - (rec.expected_depth_mm or 0.0)
+            rec.depth_diff_cm = (rec.measured_depth_cm or 0.0) - (rec.expected_depth_cm or 0.0)
             rec.density_diff = (rec.measured_density or 0.0) - (rec.expected_density or 0.0)
 
-    @api.depends("measured_depth_mm", "calibration_profile_id")
+    @api.depends("measured_depth_cm", "calibration_profile_id")
     def _compute_measured_volume(self):
         for rec in self:
-            if rec.calibration_profile_id and rec.measured_depth_mm is not False:
-                rec.measured_volume_liters = rec.calibration_profile_id.volume_from_depth_mm(
-                    rec.measured_depth_mm
+            if rec.calibration_profile_id and rec.measured_depth_cm is not False:
+                rec.measured_volume_liters = rec.calibration_profile_id.volume_from_depth_cm(
+                    rec.measured_depth_cm
                 )
             else:
                 rec.measured_volume_liters = 0.0
@@ -285,17 +324,17 @@ class FuelDeliveryTankDip(models.Model):
         domain=[("profile_type", "=", "tank")],
     )
 
-    depth_before_mm = fields.Float(string="Depth Before (mm)")
-    depth_after_mm = fields.Float(string="Depth After (mm)")
+    depth_before_cm = fields.Float(string="Depth Before (cm)")
+    depth_after_cm = fields.Float(string="Depth After (cm)")
 
     volume_before_liters = fields.Float(
-        string="Volume Before (L)", compute="_compute_volumes", store=False
+        string="Volume Before (L)", compute="_compute_volumes", store=True
     )
     volume_after_liters = fields.Float(
-        string="Volume After (L)", compute="_compute_volumes", store=False
+        string="Volume After (L)", compute="_compute_volumes", store=True
     )
     delta_volume_liters = fields.Float(
-        string="Delta (L)", compute="_compute_volumes", store=False
+        string="Delta (L)", compute="_compute_volumes", store=True
     )
 
     @api.depends("delivery_id.picking_id")
@@ -309,15 +348,15 @@ class FuelDeliveryTankDip(models.Model):
             )
             rec.picking_product_ids = [(6, 0, products.ids)]
 
-    @api.depends("depth_before_mm", "depth_after_mm", "calibration_profile_id")
+    @api.depends("depth_before_cm", "depth_after_cm", "calibration_profile_id")
     def _compute_volumes(self):
         for rec in self:
             if rec.calibration_profile_id:
-                rec.volume_before_liters = rec.calibration_profile_id.volume_from_depth_mm(
-                    rec.depth_before_mm
+                rec.volume_before_liters = rec.calibration_profile_id.volume_from_depth_cm(
+                    rec.depth_before_cm
                 )
-                rec.volume_after_liters = rec.calibration_profile_id.volume_from_depth_mm(
-                    rec.depth_after_mm
+                rec.volume_after_liters = rec.calibration_profile_id.volume_from_depth_cm(
+                    rec.depth_after_cm
                 )
             else:
                 rec.volume_before_liters = 0.0

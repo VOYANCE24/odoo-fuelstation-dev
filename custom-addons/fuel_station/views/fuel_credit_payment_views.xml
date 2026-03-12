@@ -10,6 +10,7 @@
           <field name="name"/>
           <field name="date"/>
           <field name="shift_id"/>
+          <field name="attendant_id"/>
           <field name="invoice_ref"/>
           <field name="customer_id"/>
           <field name="currency_id" column_invisible="1"/>
@@ -17,6 +18,11 @@
           <field name="payment_method" widget="badge"
                  decoration-success="payment_method == 'cash'"
                  decoration-info="payment_method == 'cheque'"/>
+          <field name="cheque_no" optional="hide"/>
+          <field name="clearance_status" widget="badge" optional="hide"
+                 decoration-warning="clearance_status == 'pending'"
+                 decoration-success="clearance_status == 'cleared'"
+                 decoration-danger="clearance_status == 'bounced'"/>
           <field name="receipt_no" optional="hide"/>
         </list>
       </field>
@@ -27,7 +33,36 @@
       <field name="model">fuel.credit.payment</field>
       <field name="arch" type="xml">
         <form>
+          <header>
+            <button name="action_mark_cleared" type="object"
+                    string="Mark Cleared" class="btn-success"
+                    invisible="payment_method != 'cheque' or clearance_status != 'pending'"/>
+            <button name="action_mark_bounced" type="object"
+                    string="Mark Bounced" class="btn-danger"
+                    invisible="payment_method != 'cheque' or clearance_status != 'pending'"/>
+            <field name="clearance_status" widget="statusbar"
+                   statusbar_visible="pending,cleared,bounced"
+                   invisible="payment_method != 'cheque'"/>
+          </header>
           <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_invoice" type="object"
+                      class="oe_stat_button" icon="fa-file-text-o"
+                      invisible="not invoice_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text">Invoice</span>
+                </div>
+              </button>
+              <button name="action_view_accounting_payment" type="object"
+                      class="oe_stat_button" icon="fa-university"
+                      invisible="not payment_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text">Payment</span>
+                </div>
+              </button>
+            </div>
+            <field name="payment_id" invisible="1"/>
+            <field name="invoice_id" invisible="1"/>
             <div class="oe_title">
               <label for="name"/>
               <h1><field name="name" readonly="1"/></h1>
@@ -36,21 +71,44 @@
               <group string="Payment Details">
                 <field name="date"/>
                 <field name="shift_id"/>
+                <field name="attendant_id"/>
                 <field name="receipt_no" placeholder="Receipt number"/>
                 <field name="payment_method"/>
               </group>
               <group string="Credit Reference">
-                <field name="invoice_ref"/>
-                <field name="credit_sale_id"
-                       help="Link to the originating credit sale to track its outstanding balance."/>
                 <field name="customer_id"/>
+                <field name="invoice_id"/>
                 <field name="currency_id" invisible="1"/>
-                <field name="total_balance" widget="monetary" string="Outstanding Balance"/>
+                <field name="total_balance" widget="monetary" readonly="1"/>
                 <field name="amount_paid" widget="monetary"/>
+              </group>
+            </group>
+            <group string="Cheque Details" invisible="payment_method != 'cheque'">
+              <group>
+                <field name="cheque_no" placeholder="Cheque number"/>
+                <field name="cheque_date"/>
+                <field name="drawee_bank" placeholder="Bank name"/>
+              </group>
+              <group>
+                <field name="clearance_date"/>
+                <field name="bounce_reason" invisible="clearance_status != 'bounced'"
+                       placeholder="Reason for bounce…"/>
               </group>
             </group>
           </sheet>
         </form>
+      </field>
+    </record>
+
+    <record id="view_fuel_credit_payment_pivot" model="ir.ui.view">
+      <field name="name">fuel.credit.payment.pivot</field>
+      <field name="model">fuel.credit.payment</field>
+      <field name="arch" type="xml">
+        <pivot string="Credit Payments" disable_linking="false">
+          <field name="customer_id" type="row"/>
+          <field name="payment_method" type="col"/>
+          <field name="amount_paid" type="measure"/>
+        </pivot>
       </field>
     </record>
 
@@ -63,6 +121,7 @@
           <field name="invoice_ref"/>
           <field name="customer_id"/>
           <field name="shift_id"/>
+          <field name="attendant_id"/>
           <filter string="Cash" name="cash" domain="[('payment_method','=','cash')]"/>
           <filter string="Cheque" name="cheque" domain="[('payment_method','=','cheque')]"/>
           <separator/>
@@ -74,9 +133,10 @@
           <filter string="Not Linked to Shift Close" name="unlinked"
                   domain="[('station_close_id','=',False)]"/>
           <group>
-            <filter string="Payment Method" name="group_method" context="{'group_by': 'payment_method'}"/>
-            <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
             <filter string="Customer" name="group_customer" context="{'group_by': 'customer_id'}"/>
+            <filter string="Payment Method" name="group_method" context="{'group_by': 'payment_method'}"/>
+            <filter string="Attendant" name="group_attendant" context="{'group_by': 'attendant_id'}"/>
+            <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
             <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
           </group>
         </search>
@@ -86,7 +146,7 @@
     <record id="action_fuel_credit_payments" model="ir.actions.act_window">
       <field name="name">Credit Payments</field>
       <field name="res_model">fuel.credit.payment</field>
-      <field name="view_mode">list,form</field>
+      <field name="view_mode">list,pivot,form</field>
       <field name="search_view_id" ref="view_fuel_credit_payment_search"/>
       <field name="context">{"search_default_today": 1}</field>
       <field name="help" type="html">

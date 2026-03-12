@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- ================================================================
+         List View
+    ================================================================ -->
+    <record id="view_fuel_nozzle_tree" model="ir.ui.view">
+      <field name="name">fuel.nozzle.tree</field>
+      <field name="model">fuel.nozzle</field>
+      <field name="arch" type="xml">
+        <list decoration-muted="not active">
+          <field name="pump_id"/>
+          <field name="nozzle_number" string="Nozzle #"/>
+          <field name="name"/>
+          <field name="product_id"/>
+          <field name="active" optional="hide"/>
+        </list>
+      </field>
+    </record>
+
+    <!-- ================================================================
+         Form View
+    ================================================================ -->
+    <record id="view_fuel_nozzle_form" model="ir.ui.view">
+      <field name="name">fuel.nozzle.form</field>
+      <field name="model">fuel.nozzle</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" placeholder="e.g. Pump 1 – Nozzle 1"/></h1>
+            </div>
+            <group>
+              <field name="pump_id"/>
+              <field name="nozzle_number"/>
+              <field name="product_id"/>
+              <field name="active"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- ================================================================
+         Search View
+    ================================================================ -->
+    <record id="view_fuel_nozzle_search" model="ir.ui.view">
+      <field name="name">fuel.nozzle.search</field>
+      <field name="model">fuel.nozzle</field>
+      <field name="arch" type="xml">
+        <search string="Search Nozzles">
+          <field name="name"/>
+          <field name="pump_id"/>
+          <field name="product_id"/>
+          <filter string="Active" name="active" domain="[('active','=',True)]"/>
+          <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
+          <group>
+            <filter string="Pump" name="group_pump" context="{'group_by': 'pump_id'}"/>
+            <filter string="Fuel Product" name="group_product" context="{'group_by': 'product_id'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- ================================================================
+         Action
+    ================================================================ -->
+    <record id="action_fuel_nozzles" model="ir.actions.act_window">
+      <field name="name">Nozzles</field>
+      <field name="res_model">fuel.nozzle</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_nozzle_search"/>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          No nozzles configured yet.
+        </p>
+        <p>Each pump has up to 4 nozzles. Meter readings are recorded per nozzle at the end of each shift.</p>
+      </field>
+    </record>
+
+  </data>
+</odoo>

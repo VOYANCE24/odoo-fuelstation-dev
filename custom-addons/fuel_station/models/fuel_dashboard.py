@@ -20,6 +20,10 @@ class FuelDashboard(models.TransientModel):
     _name = "fuel.dashboard"
     _description = "Fuel Station Dashboard"
 
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = "Fuel Station Dashboard"
+
     # ------------------------------------------------------------------
     # Period selector
     # ------------------------------------------------------------------
@@ -72,9 +76,22 @@ class FuelDashboard(models.TransientModel):
         digits=(16, 2),
     )
     total_cash_collected = fields.Float(
-        string="Cash Credit Collected",
-        compute="_compute_receivables",
+        string="Cash Collected",
+        compute="_compute_cash_collected",
         digits=(16, 2),
+        help="Sum of cash deposited in safe across approved shift closes in the period.",
+    )
+    petty_cash_balance = fields.Float(
+        string="Petty Cash Balance",
+        compute="_compute_petty_cash_kpis",
+        digits=(16, 2),
+        help="Running petty cash balance: total replenishments minus all posted expenses.",
+    )
+    total_period_expenses = fields.Float(
+        string="Period Cash Expenses",
+        compute="_compute_petty_cash_kpis",
+        digits=(16, 2),
+        help="Total posted cash expenses in the selected period.",
     )
     total_safe_difference = fields.Float(
         string="Cash Variance",
@@ -82,6 +99,18 @@ class FuelDashboard(models.TransientModel):
         digits=(16, 2),
         help="Sum of safe_difference across approved shift closes in the period. "
              "Negative = shortage, Positive = overage.",
+    )
+    total_cash_credit_received = fields.Float(
+        string="Cash Credit Payments",
+        compute="_compute_credit_collections",
+        digits=(16, 2),
+        help="Sum of credit payments received in cash during the selected period.",
+    )
+    total_cheque_credit_received = fields.Float(
+        string="Cheque Credit Payments",
+        compute="_compute_credit_collections",
+        digits=(16, 2),
+        help="Sum of credit payments received by cheque during the selected period.",
     )
 
     currency_id = fields.Many2one(
@@ -232,15 +261,50 @@ class FuelDashboard(models.TransientModel):
             )
             total_paid = cp_result[0]["amount_paid"] if cp_result else 0.0
 
-            cp_cash_result = self.env["fuel.credit.payment"].read_group(
-                domain=cp_domain + [("payment_method", "=", "cash")],
-                fields=["amount_paid:sum"],
+            rec.total_receivables = max(total_credit - total_paid, 0.0)
+
+    @api.depends("date_from", "date_to")
+    def _compute_cash_collected(self):
+        """Cash collected = sum of cash_deposited_in_safe across approved shift closes."""
+        for rec in self:
+            domain = [("state", "=", "approved")]
+            if rec.date_from:
+                domain.append(("date", ">=", rec.date_from))
+            if rec.date_to:
+                domain.append(("date", "<=", rec.date_to))
+            result = self.env["fuel.station.shift.close"].read_group(
+                domain=domain,
+                fields=["cash_deposited_in_safe:sum"],
                 groupby=[],
             )
-            cash_paid = cp_cash_result[0]["amount_paid"] if cp_cash_result else 0.0
+            rec.total_cash_collected = result[0]["cash_deposited_in_safe"] if result else 0.0
 
-            rec.total_receivables = max(total_credit - total_paid, 0.0)
-            rec.total_cash_collected = cash_paid
+    @api.depends("date_from", "date_to")
+    def _compute_petty_cash_kpis(self):
+        for rec in self:
+            # Running petty cash balance — all-time, petty_cash source only
+            replenishments = self.env["fuel.petty.cash.replenishment"].search([])
+            posted_expenses = self.env["fuel.petty.cash.expense"].search([
+                ("state", "=", "posted"),
+                ("payment_source", "=", "petty_cash"),
+            ])
+            rec.petty_cash_balance = (
+                sum(replenishments.mapped("amount"))
+                - sum(posted_expenses.mapped("amount"))
+            )
+
+            # Period expenses — date-filtered, petty_cash source only
+            exp_domain = [("state", "=", "posted"), ("payment_source", "=", "petty_cash")]
+            if rec.date_from:
+                exp_domain.append(("date", ">=", rec.date_from))
+            if rec.date_to:
+                exp_domain.append(("date", "<=", rec.date_to))
+            exp_result = self.env["fuel.petty.cash.expense"].read_group(
+                domain=exp_domain,
+                fields=["amount:sum"],
+                groupby=[],
+            )
+            rec.total_period_expenses = exp_result[0]["amount"] if exp_result else 0.0
 
     @api.depends("date_from", "date_to")
     def _compute_cash_variance(self):
@@ -257,6 +321,43 @@ class FuelDashboard(models.TransientModel):
             )
             rec.total_safe_difference = result[0]["safe_difference"] if result else 0.0
 
+    @api.depends("date_from", "date_to")
+    def _compute_credit_collections(self):
+        for rec in self:
+            df, dt = rec.date_from, rec.date_to
+
+            def dt_start(d):
+                return fields.Datetime.to_datetime(d) if d else None
+
+            def dt_end(d):
+                return fields.Datetime.to_datetime(d).replace(
+                    hour=23, minute=59, second=59
+                ) if d else None
+
+            cash_domain = [("payment_method", "=", "cash")]
+            if df:
+                cash_domain.append(("date", ">=", dt_start(df)))
+            if dt:
+                cash_domain.append(("date", "<=", dt_end(dt)))
+            cash_result = self.env["fuel.credit.payment"].read_group(
+                domain=cash_domain,
+                fields=["amount_paid:sum"],
+                groupby=[],
+            )
+            rec.total_cash_credit_received = cash_result[0]["amount_paid"] if cash_result else 0.0
+
+            cheque_domain = [("payment_method", "=", "cheque")]
+            if df:
+                cheque_domain.append(("date", ">=", dt_start(df)))
+            if dt:
+                cheque_domain.append(("date", "<=", dt_end(dt)))
+            cheque_result = self.env["fuel.credit.payment"].read_group(
+                domain=cheque_domain,
+                fields=["amount_paid:sum"],
+                groupby=[],
+            )
+            rec.total_cheque_credit_received = cheque_result[0]["amount_paid"] if cheque_result else 0.0
+
     @api.depends_context('company')
     def _compute_currency_id(self):
         for rec in self:
@@ -268,13 +369,12 @@ class FuelDashboard(models.TransientModel):
 
     def _populate_tank_levels(self):
         """
-        For every product marked is_fuel_product=True, find the most recent
-        approved shift-close balance line and read its closing_litres as the
-        current tank level.
+        For every product marked is_fuel_product=True, display the live
+        quantity on hand from Odoo's stock (stock.quant at internal locations).
 
-        Performance: uses a single search for all fuel products combined,
-        then picks the latest line per product in Python — avoids N separate
-        searches (one per fuel product).
+        The 'last_close_date' is still pulled from the most recent approved
+        shift-close balance line so operators can see when the last physical
+        dip measurement was taken.
         """
         self.ensure_one()
         TankLine = self.env["fuel.dashboard.tank.level"]
@@ -295,12 +395,25 @@ class FuelDashboard(models.TransientModel):
                 fuel_products |= product
                 capacity_by_product[product.id] = tmpl.fuel_tank_capacity_liters or 0.0
 
-        # Single query for all fuel products — pick latest per product in Python
+        # ── Live stock quantity on hand (internal locations only) ─────────
+        # Single read_group → one SQL query for all fuel products at once.
+        quant_groups = self.env["stock.quant"].read_group(
+            domain=[
+                ("product_id", "in", fuel_products.ids),
+                ("location_id.usage", "=", "internal"),
+            ],
+            fields=["product_id", "quantity:sum"],
+            groupby=["product_id"],
+        )
+        qty_on_hand: dict[int, float] = {
+            g["product_id"][0]: g["quantity"] for g in quant_groups
+        }
+
+        # ── Last physical dip date from balance lines (reference only) ────
         all_lines = self.env["fuel.station.fuel.balance.line"].search([
             ("product_id", "in", fuel_products.ids),
             ("close_id.state", "=", "approved"),
         ], order="date desc, id desc")
-
         latest_by_product: dict[int, object] = {}
         for line in all_lines:
             pid = line.product_id.id
@@ -310,11 +423,11 @@ class FuelDashboard(models.TransientModel):
         # Build all tank level lines and create in a single batch
         vals_list = []
         for product in fuel_products:
-            latest = latest_by_product.get(product.id)
-            current = latest.closing_litres if latest else 0.0
+            current = max(qty_on_hand.get(product.id, 0.0), 0.0)
             capacity = capacity_by_product.get(product.id, 0.0)
             pct = round(min((current / capacity * 100), 100.0), 1) if capacity else 0.0
             fill_status = 'success' if pct >= 50 else ('warning' if pct >= 25 else 'danger')
+            latest = latest_by_product.get(product.id)
             vals_list.append({
                 "dashboard_id": self.id,
                 "product_id": product.id,
@@ -500,6 +613,31 @@ class FuelDashboard(models.TransientModel):
             "domain": [("state", "=", "draft")],
         }
 
+    def action_open_petty_cash_deposits(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Petty Cash Deposits",
+            "res_model": "fuel.petty.cash.replenishment",
+            "view_mode": "list,form",
+            "domain": [],
+        }
+
+    def action_open_period_expenses(self):
+        self.ensure_one()
+        domain = [("state", "=", "posted")]
+        if self.date_from:
+            domain.append(("date", ">=", self.date_from))
+        if self.date_to:
+            domain.append(("date", "<=", self.date_to))
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Cash Expenses",
+            "res_model": "fuel.petty.cash.expense",
+            "view_mode": "list,form",
+            "domain": domain,
+        }
+
     def action_open_pending_deliveries(self):
         self.ensure_one()
         return {
@@ -508,6 +646,40 @@ class FuelDashboard(models.TransientModel):
             "res_model": "fuel.delivery",
             "view_mode": "list,form",
             "domain": [("state", "=", "draft")],
+        }
+
+    def action_open_cash_credit_payments(self):
+        self.ensure_one()
+        domain = [("payment_method", "=", "cash")]
+        if self.date_from:
+            domain.append(("date", ">=", fields.Datetime.to_datetime(self.date_from)))
+        if self.date_to:
+            domain.append(("date", "<=", fields.Datetime.to_datetime(self.date_to).replace(
+                hour=23, minute=59, second=59
+            )))
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Cash Credit Payments",
+            "res_model": "fuel.credit.payment",
+            "view_mode": "list,pivot,form",
+            "domain": domain,
+        }
+
+    def action_open_cheque_credit_payments(self):
+        self.ensure_one()
+        domain = [("payment_method", "=", "cheque")]
+        if self.date_from:
+            domain.append(("date", ">=", fields.Datetime.to_datetime(self.date_from)))
+        if self.date_to:
+            domain.append(("date", "<=", fields.Datetime.to_datetime(self.date_to).replace(
+                hour=23, minute=59, second=59
+            )))
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Cheque Credit Payments",
+            "res_model": "fuel.credit.payment",
+            "view_mode": "list,pivot,form",
+            "domain": domain,
         }
 
     # ------------------------------------------------------------------
@@ -553,7 +725,7 @@ class FuelDashboardTankLevel(models.TransientModel):
     tank_capacity = fields.Float(string="Capacity (L)", digits=(16, 2), readonly=True)
     fill_percent = fields.Float(string="Fill %", digits=(5, 1), readonly=True)
     fill_status = fields.Char(string="Status", readonly=True)  # 'success' | 'warning' | 'danger'
-    last_close_date = fields.Date(string="As of", readonly=True)
+    last_close_date = fields.Date(string="Last Dip", readonly=True)
 
 
 # ---------------------------------------------------------------------------

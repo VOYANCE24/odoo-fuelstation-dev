@@ -9,6 +9,7 @@
         <list>
           <field name="name"/>
           <field name="employee_id" optional="show"/>
+          <field name="partner_id" optional="show"/>
           <field name="active" optional="hide"/>
         </list>
       </field>
@@ -20,13 +21,34 @@
       <field name="arch" type="xml">
         <form>
           <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_shortage_invoices" type="object"
+                      class="oe_stat_button" icon="fa-exclamation-circle"
+                      invisible="shortage_invoice_count == 0">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_value">
+                    <field name="shortage_invoice_count"/>
+                  </span>
+                  <span class="o_stat_text">Shortages</span>
+                </div>
+              </button>
+            </div>
             <div class="oe_title">
               <label for="name"/>
               <h1><field name="name" placeholder="Attendant Name"/></h1>
             </div>
             <group>
-              <field name="employee_id"/>
-              <field name="active"/>
+              <group string="Details">
+                <field name="employee_id"/>
+                <field name="partner_id"
+                       help="Required for shortage invoices when a session has a cash shortage."/>
+                <field name="active"/>
+              </group>
+              <group string="Outstanding Shortages" invisible="shortage_invoice_count == 0">
+                <field name="currency_id" invisible="1"/>
+                <field name="total_outstanding_shortage" widget="monetary"
+                       string="Total Owed to Station"/>
+              </group>
             </group>
           </sheet>
         </form>

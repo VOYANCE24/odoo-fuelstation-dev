@@ -54,6 +54,13 @@ class FuelStationFuelBalanceLine(models.Model):
 
     product_id = fields.Many2one("product.product", required=True)
 
+    uom_id = fields.Many2one(
+        "uom.uom",
+        string="Unit",
+        default=lambda self: self.env.ref("uom.product_uom_litre"),
+        readonly=True,
+    )
+
     opening_litres = fields.Float(string="Opening Litres")
     closing_litres = fields.Float(string="Closing Litres")
 

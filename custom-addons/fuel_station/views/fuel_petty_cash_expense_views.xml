@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <!-- List View -->
+    <record id="view_fuel_petty_cash_expense_tree" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.expense.tree</field>
+      <field name="model">fuel.petty.cash.expense</field>
+      <field name="arch" type="xml">
+        <list decoration-muted="state == 'draft'"
+              decoration-success="state == 'posted'">
+          <field name="name"/>
+          <field name="bill_no" optional="show"/>
+          <field name="date"/>
+          <field name="shift_id" optional="show"/>
+          <field name="vendor_id" optional="show"/>
+          <field name="currency_id" column_invisible="1"/>
+          <field name="amount" widget="monetary"/>
+          <field name="paid_by" optional="show"/>
+          <field name="receipt_ref" optional="show"/>
+          <field name="payment_source" widget="badge"
+                 decoration-info="payment_source == 'session_payout'"
+                 optional="show"/>
+          <field name="state" widget="badge"
+                 decoration-success="state == 'posted'"
+                 decoration-warning="state == 'draft'"/>
+        </list>
+      </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_fuel_petty_cash_expense_form" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.expense.form</field>
+      <field name="model">fuel.petty.cash.expense</field>
+      <field name="arch" type="xml">
+        <form>
+          <header>
+            <button name="action_post" type="object" string="Post"
+                    class="btn-primary" invisible="state != 'draft'"
+                    groups="fuel_station.group_fuel_manager"/>
+            <button name="action_reset_to_draft" type="object" string="Reset to Draft"
+                    class="btn-secondary" invisible="state != 'posted'"
+                    groups="fuel_station.group_fuel_manager"
+                    confirm="This will cancel the linked vendor bill or journal entry. Continue?"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,posted"/>
+          </header>
+          <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_journal_entry" type="object"
+                      class="oe_stat_button" icon="fa-file-text-o"
+                      invisible="not account_move_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text" invisible="not vendor_id">Vendor Bill</span>
+                  <span class="o_stat_text" invisible="vendor_id">Journal Entry</span>
+                </div>
+              </button>
+            </div>
+            <field name="account_move_id" invisible="1"/>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name" readonly="1"/></h1>
+            </div>
+            <group>
+              <group string="Details">
+                <field name="date" readonly="state == 'posted'"/>
+                <field name="payment_source" readonly="state == 'posted'"/>
+                <field name="shift_id" readonly="state == 'posted'"
+                       invisible="payment_source == 'session_payout'"/>
+                <field name="payout_id" readonly="1"
+                       invisible="payment_source != 'session_payout'"/>
+                <field name="vendor_id" readonly="state == 'posted'"/>
+                <field name="receipt_ref" readonly="state == 'posted'"/>
+                <field name="paid_by" readonly="state == 'posted'"/>
+              </group>
+              <group string="Summary">
+                <field name="currency_id" invisible="1"/>
+                <field name="bill_no" readonly="1"/>
+                <field name="amount" widget="monetary" readonly="1"/>
+              </group>
+            </group>
+            <field name="line_ids" readonly="state == 'posted'">
+              <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="category_id"/>
+                <field name="description"/>
+                <field name="qty"/>
+                <field name="rate"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="amount" widget="monetary" readonly="1"/>
+              </list>
+            </field>
+          </sheet>
+
+        </form>
+      </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_fuel_petty_cash_expense_search" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.expense.search</field>
+      <field name="model">fuel.petty.cash.expense</field>
+      <field name="arch" type="xml">
+        <search string="Search Cash Expenses">
+          <field name="name"/>
+          <field name="vendor_id"/>
+          <field name="paid_by"/>
+          <filter string="Draft" name="draft" domain="[('state','=','draft')]"/>
+          <filter string="Posted" name="posted" domain="[('state','=','posted')]"/>
+          <separator/>
+          <filter string="Today" name="today"
+                  domain="[('date','=', context_today().strftime('%Y-%m-%d'))]"/>
+          <filter string="This Month" name="this_month"
+                  domain="[('date','&gt;=', context_today().replace(day=1).strftime('%Y-%m-%d'))]"/>
+          <group>
+            <filter string="Vendor" name="group_vendor" context="{'group_by': 'vendor_id'}"/>
+            <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
+            <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
+            <filter string="Paid By" name="group_paid_by" context="{'group_by': 'paid_by'}"/>
+            <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_fuel_petty_cash_expenses" model="ir.actions.act_window">
+      <field name="name">Cash Expenses</field>
+      <field name="res_model">fuel.petty.cash.expense</field>
+      <field name="view_mode">list,form</field>
+      <field name="search_view_id" ref="view_fuel_petty_cash_expense_search"/>
+      <field name="context">{"search_default_draft": 1}</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">No cash expenses recorded yet.</p>
+        <p>Record an expense paid from the petty cash fund.</p>
+      </field>
+    </record>
+
+  </data>
+</odoo>

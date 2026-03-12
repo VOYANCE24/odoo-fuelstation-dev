@@ -9,7 +9,6 @@
         <list>
           <field name="name"/>
           <field name="code" optional="hide"/>
-          <field name="product_id"/>
           <field name="active" optional="hide"/>
         </list>
       </field>
@@ -27,9 +26,20 @@
             </div>
             <group>
               <field name="code" placeholder="e.g. P1"/>
-              <field name="product_id"/>
               <field name="active"/>
             </group>
+            <notebook>
+              <page string="Nozzles" name="nozzles">
+                <field name="nozzle_ids">
+                  <list editable="bottom">
+                    <field name="nozzle_number" string="Nozzle #"/>
+                    <field name="name"/>
+                    <field name="product_id"/>
+                    <field name="active" optional="hide"/>
+                  </list>
+                </field>
+              </page>
+            </notebook>
           </sheet>
         </form>
       </field>
@@ -41,12 +51,8 @@
       <field name="arch" type="xml">
         <search string="Search Pumps">
           <field name="name"/>
-          <field name="product_id"/>
           <filter string="Active" name="active" domain="[('active','=',True)]"/>
           <filter string="Archived" name="archived" domain="[('active','=',False)]"/>
-          <group>
-            <filter string="Fuel Product" name="group_product" context="{'group_by': 'product_id'}"/>
-          </group>
         </search>
       </field>
     </record>
@@ -60,7 +66,7 @@
         <p class="o_view_nocontent_smiling_face">
           Register your first fuel pump.
         </p>
-        <p>Each pump is assigned a fuel product and used to track meter readings per attendant session.</p>
+        <p>Each pump can have up to 4 nozzles, each dispensing a specific fuel product.</p>
       </field>
     </record>
 

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data>
+
+    <record id="view_fuel_petty_cash_category_tree" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.category.tree</field>
+      <field name="model">fuel.petty.cash.category</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="code"/>
+          <field name="account_code"/>
+          <field name="account_id" optional="show"/>
+          <field name="hr_expense_product_id" optional="hide"/>
+          <field name="active" column_invisible="1"/>
+        </list>
+      </field>
+    </record>
+
+    <record id="view_fuel_petty_cash_category_form" model="ir.ui.view">
+      <field name="name">fuel.petty.cash.category.form</field>
+      <field name="model">fuel.petty.cash.category</field>
+      <field name="arch" type="xml">
+        <form>
+          <sheet>
+            <div class="oe_title">
+              <label for="name"/>
+              <h1><field name="name"/></h1>
+            </div>
+            <group>
+              <group string="Identification">
+                <field name="code"/>
+                <field name="active"/>
+              </group>
+              <group string="Accounting Integration">
+                <field name="account_code"/>
+                <field name="account_id"/>
+              </group>
+            </group>
+            <group string="Enterprise Integration">
+              <field name="hr_expense_product_id"
+                     help="Set this product to automatically create hr.expense records when an expense is posted."/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_fuel_petty_cash_categories" model="ir.actions.act_window">
+      <field name="name">Expense Categories</field>
+      <field name="res_model">fuel.petty.cash.category</field>
+      <field name="view_mode">list,form</field>
+    </record>
+
+  </data>
+</odoo>

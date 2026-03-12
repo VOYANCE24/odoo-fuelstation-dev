@@ -55,7 +55,15 @@
                       class="oe_stat_button" icon="fa-credit-card">
                 <field name="credit_payment_count" widget="statinfo" string="Credit Payments"/>
               </button>
+              <button name="action_view_safe_deposit_entry" type="object"
+                      class="oe_stat_button" icon="fa-university"
+                      invisible="not move_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text">Safe Deposit Entry</span>
+                </div>
+              </button>
             </div>
+            <field name="move_id" invisible="1"/>
             <div class="oe_title">
               <label for="name"/>
               <h1><field name="name" readonly="1"/></h1>
@@ -67,12 +75,14 @@
               </group>
               <group string="Cash Summary">
                 <field name="currency_id" invisible="1"/>
-                <field name="pump_sales_total" widget="monetary" readonly="1"/>
+                <field name="pump_sales_total" widget="monetary" readonly="1" string="Total Cash Sales"/>
+                <field name="payout_total" widget="monetary" readonly="1"/>
                 <field name="cash_expected" widget="monetary" readonly="1"/>
                 <field name="cash_deposited_in_safe" widget="monetary"/>
                 <field name="safe_difference" widget="monetary" readonly="1"/>
               </group>
             </group>
+            <field name="note" placeholder="Notes…" readonly="state == 'approved'"/>
             <notebook>
               <page string="Sessions" name="sessions">
                 <field name="attendant_session_ids" readonly="1">
@@ -94,6 +104,7 @@
                 <field name="fuel_balance_line_ids">
                   <list editable="bottom">
                     <field name="product_id"/>
+                    <field name="uom_id" readonly="1" options="{'no_open': true}" string="Unit"/>
                     <field name="opening_litres"/>
                     <field name="delivered_litres" readonly="1"/>
                     <field name="closing_litres"/>
@@ -105,21 +116,6 @@
                     <field name="loss_value" widget="monetary" readonly="1"/>
                   </list>
                 </field>
-              </page>
-              <page string="Cash Balancing" name="cash_balancing">
-                <group string="Sales Summary">
-                  <field name="pump_sales_total" widget="monetary" readonly="1"/>
-                  <field name="pump_credit_total" widget="monetary" readonly="1"/>
-                </group>
-                <group string="Credit Payment Collections">
-                  <field name="cash_credit_payments" widget="monetary" readonly="1"/>
-                  <field name="cheque_credit_payments" widget="monetary" readonly="1"/>
-                </group>
-                <group string="Cash Reconciliation" class="oe_subtotal_footer">
-                  <field name="cash_expected" widget="monetary" readonly="1"/>
-                  <field name="cash_deposited_in_safe" widget="monetary"/>
-                  <field name="safe_difference" widget="monetary" readonly="1"/>
-                </group>
               </page>
               <page string="Credit Payments" name="credit_payments">
                 <field name="credit_payment_ids" readonly="1">
@@ -136,9 +132,46 @@
                   </list>
                 </field>
               </page>
+              <page string="Cash Expenses" name="cash_expenses">
+                <field name="expense_ids" readonly="1">
+                  <list>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="vendor_id" optional="show"/>
+                    <field name="receipt_ref" optional="show"/>
+                    <field name="paid_by" optional="show"/>
+                    <field name="currency_id" column_invisible="1"/>
+                    <field name="amount" widget="monetary"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'posted'"
+                           decoration-warning="state == 'draft'"/>
+                  </list>
+                </field>
+                <group class="oe_subtotal_footer">
+                  <field name="total_expenses" widget="monetary" readonly="1"
+                         string="Total Cash Expenses"/>
+                </group>
+              </page>
+              <page string="Cash Balancing" name="cash_balancing">
+                <group string="Sales Summary">
+                  <field name="pump_sales_total" widget="monetary" readonly="1"
+                         string="Total Cash Sales"/>
+                  <field name="pump_credit_total" widget="monetary" readonly="1"/>
+                </group>
+                <group string="Credit Payment Collections">
+                  <field name="cash_credit_payments" widget="monetary" readonly="1"/>
+                  <field name="cheque_credit_payments" widget="monetary" readonly="1"/>
+                </group>
+                <group string="Cash Reconciliation" class="oe_subtotal_footer">
+                  <field name="cash_expected" widget="monetary" readonly="1"/>
+                  <field name="total_expenses" widget="monetary" readonly="1"/>
+                  <field name="cash_deposited_in_safe" widget="monetary"/>
+                  <field name="safe_difference" widget="monetary" readonly="1"/>
+                </group>
+              </page>
             </notebook>
           </sheet>
-          <chatter/>
+
         </form>
       </field>
     </record>
@@ -173,7 +206,7 @@
          Action
     ================================================================ -->
     <record id="action_fuel_station_shift_closes" model="ir.actions.act_window">
-      <field name="name">Station Shift Closes</field>
+      <field name="name">Station Shift Close</field>
       <field name="res_model">fuel.station.shift.close</field>
       <field name="view_mode">list,form</field>
       <field name="search_view_id" ref="view_fuel_station_shift_close_search"/>

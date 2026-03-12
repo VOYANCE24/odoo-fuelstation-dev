@@ -16,13 +16,9 @@
           <field name="date"/>
           <field name="shift_id"/>
           <field name="attendant_id"/>
-          <field name="pump_id"/>
-          <field name="product_id" optional="show"/>
           <field name="invoice_ref"/>
           <field name="customer_id"/>
-          <field name="vehicle_plate" optional="show"/>
-          <field name="vehicle_type" optional="hide"/>
-          <field name="litres"/>
+          <field name="litres" optional="show"/>
           <field name="currency_id" column_invisible="1"/>
           <field name="amount" widget="monetary"/>
           <field name="amount_paid" widget="monetary" optional="show"/>
@@ -60,7 +56,7 @@
                   <div class="o_kanban_record_top mb-2">
                     <div class="o_kanban_record_headings">
                       <strong class="o_kanban_record_title fs-6">
-                        <t t-esc="record.invoice_ref.value"/>
+                        <t t-esc="record.invoice_ref.value or record.name.value"/>
                       </strong>
                     </div>
                     <span t-attf-class="badge rounded-pill #{record.payment_state.raw_value == 'paid' ? 'text-bg-success' : record.payment_state.raw_value == 'partial' ? 'text-bg-warning' : 'text-bg-danger'}">
@@ -106,33 +102,56 @@
                    statusbar_visible="unpaid,partial,paid"/>
           </header>
           <sheet>
+            <div class="oe_button_box" name="button_box">
+              <button name="action_view_invoice" type="object"
+                      class="oe_stat_button" icon="fa-pencil-square-o"
+                      invisible="not move_id">
+                <div class="o_field_widget o_stat_info">
+                  <span class="o_stat_text">Invoice</span>
+                  <span class="o_stat_value"><field name="invoice_ref"/></span>
+                </div>
+              </button>
+            </div>
+            <field name="is_locked" invisible="1"/>
+            <field name="move_id" invisible="1"/>
             <div class="oe_title">
               <label for="name"/>
               <h1><field name="name" readonly="1"/></h1>
             </div>
             <group>
               <group string="Sale Details">
-                <field name="date"/>
-                <field name="shift_id"/>
-                <field name="attendant_id"/>
-                <field name="pump_id"/>
-                <field name="product_id" readonly="1"/>
+                <field name="date" readonly="is_locked"/>
+                <field name="shift_id" readonly="is_locked"/>
+                <field name="attendant_id" readonly="is_locked"/>
               </group>
-              <group string="Customer / Vehicle">
-                <field name="invoice_ref"/>
-                <field name="customer_id"/>
-                <field name="customer_name" placeholder="Name if not in system"/>
-                <field name="vehicle_type" optional="hide"/>
-                <field name="vehicle_plate"/>
+              <group string="Customer">
+                <field name="customer_id" readonly="is_locked"/>
               </group>
             </group>
-            <group>
-              <group string="Fuel">
+
+            <!-- Sale lines: one row per vehicle/nozzle -->
+            <field name="line_ids" readonly="is_locked">
+              <list editable="bottom">
+                <field name="nozzle_id" domain="[('active','=',True)]"/>
+                <field name="pump_id" readonly="1" optional="show"/>
+                <field name="product_id" readonly="1"/>
+                <field name="vehicle_type" optional="show"/>
+                <field name="vehicle_plate"/>
                 <field name="litres"/>
                 <field name="price"/>
-                <field name="currency_id" invisible="1"/>
+                <field name="analytic_distribution" widget="analytic_distribution"
+                       optional="hide"/>
+                <field name="currency_id" column_invisible="1"/>
                 <field name="amount" widget="monetary" readonly="1"/>
-              </group>
+              </list>
+            </field>
+            <group class="oe_subtotal_footer">
+              <field name="currency_id" invisible="1"/>
+              <field name="litres" readonly="1" string="Total Litres"/>
+              <field name="amount" widget="monetary" readonly="1" string="Total Amount"/>
+            </group>
+
+            <group>
               <group string="Payment Status">
                 <field name="amount_paid" widget="monetary" readonly="1"/>
                 <field name="amount_outstanding" widget="monetary" readonly="1"/>
@@ -153,7 +172,7 @@
               </page>
             </notebook>
           </sheet>
-          <chatter/>
+
         </form>
       </field>
     </record>
@@ -169,7 +188,6 @@
           <field name="name"/>
           <field name="invoice_ref"/>
           <field name="customer_id"/>
-          <field name="vehicle_plate"/>
           <field name="attendant_id"/>
           <field name="shift_id"/>
           <filter string="Unpaid" name="unpaid" domain="[('payment_state','=','unpaid')]"/>
@@ -186,9 +204,9 @@
           <group>
             <filter string="Payment Status" name="group_payment_state" context="{'group_by': 'payment_state'}"/>
             <filter string="Attendant" name="group_attendant" context="{'group_by': 'attendant_id'}"/>
+            <filter string="Customer" name="group_customer" context="{'group_by': 'customer_id'}"/>
             <filter string="Shift" name="group_shift" context="{'group_by': 'shift_id'}"/>
             <filter string="Date" name="group_date" context="{'group_by': 'date:day'}"/>
-            <filter string="Product" name="group_product" context="{'group_by': 'product_id'}"/>
           </group>
         </search>
       </field>
@@ -202,7 +220,7 @@
       <field name="res_model">fuel.credit.sale</field>
       <field name="view_mode">list,kanban,form</field>
       <field name="search_view_id" ref="view_fuel_credit_sale_search"/>
-      <field name="context">{"search_default_today": 1}</field>
+      <field name="context">{"search_default_unpaid": 1}</field>
       <field name="help" type="html">
         <p class="o_view_nocontent_smiling_face">
           No credit sales recorded yet.

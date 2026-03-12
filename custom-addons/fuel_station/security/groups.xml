@@ -26,5 +26,11 @@
       <field name="implied_ids" eval="[(4, ref('fuel_station.group_fuel_user'))]"/>
     </record>
 
+    <!-- Assign the built-in Administrator to Fuel Station / Manager so the
+         app is fully accessible on a fresh install without manual setup. -->
+    <record id="base.user_admin" model="res.users">
+      <field name="groups_id" eval="[(4, ref('fuel_station.group_fuel_manager'))]"/>
+    </record>
+
   </data>
 </odoo>
